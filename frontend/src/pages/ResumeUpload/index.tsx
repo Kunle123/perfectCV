@@ -29,10 +29,19 @@ const ResumeUpload = () => {
       const file = acceptedFiles[0];
       if (!file) return;
 
-      if (file.type !== 'application/pdf') {
+      // Check for valid file types
+      const validTypes = [
+        'application/pdf',
+        'application/msword',
+        'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+        'application/rtf',
+        'text/rtf'
+      ];
+      
+      if (!validTypes.includes(file.type)) {
         toast({
           title: 'Invalid file type',
-          description: 'Please upload a PDF file',
+          description: 'Please upload a PDF, DOC, DOCX, or RTF file',
           status: 'error',
           duration: 3000,
           isClosable: true,
@@ -88,6 +97,10 @@ const ResumeUpload = () => {
     onDrop,
     accept: {
       'application/pdf': ['.pdf'],
+      'application/msword': ['.doc'],
+      'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx'],
+      'application/rtf': ['.rtf'],
+      'text/rtf': ['.rtf']
     },
     maxFiles: 1,
   });
@@ -124,7 +137,7 @@ const ResumeUpload = () => {
                     : 'Drag and drop your resume here, or click to select'}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
-                  PDF files only (max 5MB)
+                  PDF, DOC, DOCX, or RTF files (max 5MB)
                 </Text>
               </VStack>
             </Box>
@@ -153,7 +166,7 @@ const ResumeUpload = () => {
           <Stack spacing={4}>
             <Heading size="md">Tips for Best Results</Heading>
             <Text>
-              • Make sure your resume is in PDF format
+              • Make sure your resume is in PDF, DOC, DOCX, or RTF format
               <br />
               • Keep the file size under 5MB
               <br />

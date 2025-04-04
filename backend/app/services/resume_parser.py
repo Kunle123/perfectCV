@@ -1,8 +1,12 @@
 import io
 import re
+import os
+import tempfile
 from typing import Dict, Any, List, Optional
 import docx
 import pdfplumber
+import textract
+from striprtf.striprtf import rtf_to_text
 from fastapi import UploadFile, HTTPException
 from datetime import datetime
 
@@ -32,6 +36,10 @@ async def parse_resume_file(content: bytes, filename: str) -> Dict[str, Any]:
             return await parse_docx(content)
         elif file_extension == 'pdf':
             return await parse_pdf(content)
+        elif file_extension == 'rtf':
+            return await parse_rtf(content)
+        elif file_extension == 'doc':
+            return await parse_doc(content)
         else:
             raise ValueError(f"Unsupported file format: {file_extension}")
     except Exception as e:
@@ -302,4 +310,91 @@ async def parse_pdf(content: bytes) -> Dict[str, Any]:
             }
         }
     except Exception as e:
-        raise ResumeParseError(f"Failed to parse PDF file: {str(e)}") 
+        raise ResumeParseError(f"Failed to parse PDF file: {str(e)}")
+
+async def parse_rtf(content: bytes) -> Dict[str, Any]:
+    """
+    Parse RTF file content.
+    
+    Args:
+        content: The file content in bytes
+        
+    Returns:
+        Dict containing parsed resume data
+    """
+    try:
+        # Convert RTF to plain text using striprtf
+        rtf_text = content.decode('utf-8', errors='ignore')
+        raw_text = rtf_to_text(rtf_text)
+        
+        # Extract sections and contact info
+        sections = extract_sections(raw_text)
+        contact_info = extract_contact_info(raw_text)
+        
+        # Parse experience and education
+        experiences = parse_experience(sections['experience'])
+        education = parse_education(sections['education'])
+        
+        return {
+            "raw_text": raw_text,
+            "contact_info": contact_info,
+            "sections": {
+                "summary": sections['summary'][0] if sections['summary'] else "",
+                "experience": experiences,
+                "education": education,
+                "skills": sections['skills'],
+                "projects": sections['projects'],
+                "certifications": sections['certifications'],
+                "languages": sections['languages'],
+                "references": sections['references']
+            }
+        }
+    except Exception as e:
+        raise ResumeParseError(f"Failed to parse RTF file: {str(e)}")
+
+async def parse_doc(content: bytes) -> Dict[str, Any]:
+    """
+    Parse DOC file content using textract.
+    
+    Args:
+        content: The file content in bytes
+        
+    Returns:
+        Dict containing parsed resume data
+    """
+    try:
+        # Save content to a temporary file
+        with tempfile.NamedTemporaryFile(suffix='.doc', delete=False) as temp_file:
+            temp_file.write(content)
+            temp_file_path = temp_file.name
+        
+        # Use textract to extract text from DOC file
+        raw_text = textract.process(temp_file_path).decode('utf-8')
+        
+        # Clean up the temporary file
+        os.unlink(temp_file_path)
+        
+        # Extract sections and contact info
+        sections = extract_sections(raw_text)
+        contact_info = extract_contact_info(raw_text)
+        
+        # Parse experience and education
+        experiences = parse_experience(sections['experience'])
+        education = parse_education(sections['education'])
+        
+        return {
+            "raw_text": raw_text,
+            "contact_info": contact_info,
+            "sections": {
+                "summary": sections['summary'][0] if sections['summary'] else "",
+                "experience": experiences,
+                "education": education,
+                "skills": sections['skills'],
+                "projects": sections['projects'],
+                "certifications": sections['certifications'],
+                "languages": sections['languages'],
+                "references": sections['references']
+            }
+        }
+    except Exception as e:
+        raise ResumeParseError(f"Failed to parse DOC file: {str(e)}")
