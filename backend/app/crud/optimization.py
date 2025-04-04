@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
-from app.models.resume import Optimization
+from app.models.optimization import Optimization
 from app.schemas.resume import OptimizationCreate, OptimizationUpdate
 
 class CRUDOptimization(CRUDBase[Optimization, OptimizationCreate, OptimizationUpdate]):
