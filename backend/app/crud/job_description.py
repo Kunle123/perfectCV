@@ -2,7 +2,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
-from app.models.resume import JobDescription
+from app.models.job_description import JobDescription
 from app.schemas.resume import JobDescriptionCreate, JobDescriptionUpdate
 
 class CRUDJobDescription(CRUDBase[JobDescription, JobDescriptionCreate, JobDescriptionUpdate]):
