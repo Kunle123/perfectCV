@@ -14,7 +14,7 @@ class Settings(BaseSettings):
         return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
 
     # Database
-    DATABASE_URL: str = "sqlite:///./app.db"
+    DATABASE_URL: str = os.getenv("DATABASE_URL", "postgresql://postgres:postgres@db:5432/perfectcv")
 
     # JWT
     JWT_SECRET_KEY: str = "your-secret-key-here"  # Change in production

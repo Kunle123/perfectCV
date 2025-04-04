@@ -1,61 +1,39 @@
-version: "3.8"
+version: '3.8'
 
 services:
-  frontend:
-    build:
-      context: .
-      dockerfile: docker/frontend/Dockerfile
-    ports:
-      - "3000:80"
-    environment:
-      - VITE_API_URL=http://localhost:8000
-    depends_on:
-      - backend
-    networks:
-      - app-network
-
   backend:
-    build:
-      context: .
-      dockerfile: docker/backend/Dockerfile
+    build: ./backend
     ports:
       - "8000:8000"
     environment:
       - DATABASE_URL=postgresql://postgres:postgres@db:5432/perfectcv
-      - SECRET_KEY=your-secret-key
-      - STRIPE_SECRET_KEY=your-stripe-secret-key
-      - STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
+      - REDIS_URL=redis://redis:6379/0
     depends_on:
       - db
-    networks:
-      - app-network
+      - redis
+
+  frontend:
+    build: ./frontend
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
 
   db:
-    image: postgres:15-alpine
-    ports:
-      - "5432:5432"
+    image: postgres:13
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
       - POSTGRES_DB=perfectcv
+    ports:
+      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
 
   redis:
-    image: redis:7-alpine
+    image: redis:6
     ports:
       - "6379:6379"
-    volumes:
-      - redis_data:/data
-    networks:
-      - app-network
 
 volumes:
   postgres_data:
-  redis_data:
-
-networks:
-  app-network:
-    driver: bridge
