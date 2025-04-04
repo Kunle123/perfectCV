@@ -15,7 +15,7 @@ import {
   Icon,
 } from '@chakra-ui/react';
 import { Link as RouterLink } from 'react-router-dom';
-import { FiFileText, FiSearch, FiShoppingCart } from 'react-icons/fi';
+import { FiFileText, FiSearch, FiShoppingCart, FiUpload } from 'react-icons/fi';
 
 const Dashboard = () => {
   const { colorMode } = useColorMode();
@@ -62,7 +62,7 @@ const Dashboard = () => {
         <Box p={6} bg={colorMode === 'light' ? 'white' : 'gray.800'} rounded="lg" shadow="md">
           <Stack spacing={6}>
             <Heading size="md">Quick Actions</Heading>
-            <SimpleGrid columns={{ base: 1, md: 3 }} spacing={4}>
+            <SimpleGrid columns={{ base: 1, md: 2, lg: 4 }} spacing={4}>
               <Button
                 as={RouterLink}
                 to="/resume-builder"
@@ -73,6 +73,17 @@ const Dashboard = () => {
                 py={4}
               >
                 Create New Resume
+              </Button>
+              <Button
+                as={RouterLink}
+                to="/resume-upload"
+                leftIcon={<Icon as={FiUpload} />}
+                colorScheme="teal"
+                size="lg"
+                height="auto"
+                py={4}
+              >
+                Upload Resume
               </Button>
               <Button
                 as={RouterLink}

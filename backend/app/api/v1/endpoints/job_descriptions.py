@@ -1,9 +1,10 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, schemas
 from app.api import deps
+from app.models.user import User
 from app.services.jd_analyzer import analyze_job_description
 
 router = APIRouter()
@@ -13,7 +14,7 @@ def create_job_description(
     *,
     db: Session = Depends(deps.get_db),
     jd_in: schemas.JobDescriptionCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new job description.
@@ -26,7 +27,7 @@ def read_job_descriptions(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve job descriptions.
@@ -41,7 +42,7 @@ def read_job_description(
     *,
     db: Session = Depends(deps.get_db),
     jd_id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get job description by ID.
@@ -58,7 +59,7 @@ async def analyze_jd(
     *,
     db: Session = Depends(deps.get_db),
     jd_text: str = Body(...),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Analyze job description text and extract key information.
@@ -84,7 +85,7 @@ def delete_job_description(
     *,
     db: Session = Depends(deps.get_db),
     jd_id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Delete job description.

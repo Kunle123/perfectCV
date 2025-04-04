@@ -14,10 +14,13 @@ import {
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiFile } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { uploadResume } from '../../services/resume';
 
 const ResumeUpload = () => {
   const { colorMode } = useColorMode();
   const toast = useToast();
+  const navigate = useNavigate();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -37,18 +40,22 @@ const ResumeUpload = () => {
         return;
       }
 
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: 'File too large',
+          description: 'Please upload a file smaller than 5MB',
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+        });
+        return;
+      }
+
       setIsUploading(true);
       setUploadProgress(0);
 
       try {
-        // Simulate file upload progress
-        for (let i = 0; i <= 100; i += 10) {
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          setUploadProgress(i);
-        }
-
-        // TODO: Implement actual file upload
-        console.log('Uploading file:', file);
+        const response = await uploadResume(file);
 
         toast({
           title: 'Upload successful',
@@ -57,10 +64,14 @@ const ResumeUpload = () => {
           duration: 3000,
           isClosable: true,
         });
+
+        // Navigate to the optimization result page
+        navigate('/optimization-result', { state: { resumeId: response.id } });
       } catch (error) {
+        console.error('Upload error:', error);
         toast({
           title: 'Upload failed',
-          description: 'There was an error uploading your resume',
+          description: 'There was an error uploading your resume. Please try again.',
           status: 'error',
           duration: 3000,
           isClosable: true,
@@ -70,7 +81,7 @@ const ResumeUpload = () => {
         setUploadProgress(0);
       }
     },
-    [toast]
+    [toast, navigate]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -113,7 +124,7 @@ const ResumeUpload = () => {
                     : 'Drag and drop your resume here, or click to select'}
                 </Text>
                 <Text fontSize="sm" color="gray.500">
-                  PDF files only
+                  PDF files only (max 5MB)
                 </Text>
               </VStack>
             </Box>

@@ -1,6 +1,6 @@
 import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import theme from './theme';
 import { getCurrentUser } from './services/auth';
 
@@ -29,31 +29,63 @@ interface PrivateRouteProps {
   isAuthenticated: boolean;
 }
 
+interface AppProps {
+  initialAuthState?: boolean;
+  skipAuthCheck?: boolean;
+}
+
 const PrivateRoute = ({ children, isAuthenticated }: PrivateRouteProps) => {
   return isAuthenticated ? <>{children}</> : <Navigate to="/login" />;
 };
 
-const App = () => {
-  // Set isAuthenticated to true for demo
-  const [isAuthenticated, setIsAuthenticated] = useState(true);
-  const [isLoading, setIsLoading] = useState(false);
+const App = ({ initialAuthState = false, skipAuthCheck = false }: AppProps) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(initialAuthState);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleLogin = () => {
+  useEffect(() => {
+    const checkAuth = async () => {
+      if (skipAuthCheck) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const user = await getCurrentUser();
+        setIsAuthenticated(!!user);
+      } catch (error) {
+        setIsAuthenticated(false);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [skipAuthCheck]);
+
+  const handleLogin = async () => {
     setIsLoading(true);
-    // TODO: Implement actual login logic
-    setTimeout(() => {
+    try {
+      // TODO: Implement actual login logic
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Login failed:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
-  const handleRegister = () => {
+  const handleRegister = async () => {
     setIsLoading(true);
-    // TODO: Implement actual registration logic
-    setTimeout(() => {
+    try {
+      // TODO: Implement actual registration logic
+      await new Promise((resolve) => setTimeout(resolve, 1000));
       setIsAuthenticated(true);
+    } catch (error) {
+      console.error('Registration failed:', error);
+    } finally {
       setIsLoading(false);
-    }, 1000);
+    }
   };
 
   const handleLogout = () => {

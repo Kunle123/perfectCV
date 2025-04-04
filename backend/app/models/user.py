@@ -1,4 +1,5 @@
 from sqlalchemy import Boolean, Column, Integer, String, Float
+from sqlalchemy.orm import relationship
 from app.models.base import Base
 
 class User(Base):
@@ -9,4 +10,8 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_superuser = Column(Boolean, default=False)
     credits = Column(Float, default=0.0)
-    stripe_customer_id = Column(String, unique=True) 
+    stripe_customer_id = Column(String, unique=True)
+    
+    # Relationships
+    resumes = relationship("Resume", back_populates="user")
+    job_descriptions = relationship("JobDescription", back_populates="user") 

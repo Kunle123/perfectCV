@@ -16,27 +16,38 @@ import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
 import { login } from '../../services/auth';
 
-const Login = () => {
+interface LoginProps {
+  onLogin?: () => Promise<void>;
+  isLoading?: boolean;
+}
+
+const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
   const { colorMode } = useColorMode();
 
+  const isLoading = externalLoading || internalLoading;
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
+    setInternalLoading(true);
 
     try {
-      await login({ email, password });
-      toast({
-        title: 'Login successful',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      navigate('/dashboard');
+      if (onLogin) {
+        await onLogin();
+      } else {
+        await login({ email, password });
+        toast({
+          title: 'Login successful',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         title: 'Login failed',
@@ -46,7 +57,7 @@ const Login = () => {
         isClosable: true,
       });
     } finally {
-      setIsLoading(false);
+      setInternalLoading(false);
     }
   };
 

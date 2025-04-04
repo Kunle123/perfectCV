@@ -1,22 +1,24 @@
-from typing import Any, List
+from typing import Any, Dict, List
 from fastapi import APIRouter, Depends, HTTPException, Body
 from sqlalchemy.orm import Session
 
-from app import crud, models, schemas
+from app import crud, schemas
 from app.api import deps
+from app.models.user import User
 from app.services.resume_optimizer import optimize_resume
 
 router = APIRouter()
 
-@router.post("/", response_model=schemas.Optimization)
-async def create_optimization(
+@router.post("/optimize-resume", response_model=Dict[str, Any])
+async def optimize_resume_endpoint(
     *,
     db: Session = Depends(deps.get_db),
-    optimization_in: schemas.OptimizationCreate,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    resume_text: str = Body(...),
+    job_description: str = Body(...),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
-    Create new resume optimization.
+    Optimize a resume given its text and job description.
     """
     # Check if user has enough credits
     if current_user.credits < 1:
@@ -25,24 +27,15 @@ async def create_optimization(
             detail="Insufficient credits. Please purchase more credits to continue."
         )
     
-    # Get resume and job description
-    resume = crud.resume.get(db=db, id=optimization_in.resume_id)
-    if not resume or resume.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Resume not found")
-    
-    jd = crud.job_description.get(db=db, id=optimization_in.job_description_id)
-    if not jd or jd.user_id != current_user.id:
-        raise HTTPException(status_code=404, detail="Job description not found")
-    
     # Optimize resume
-    optimization_result = await optimize_resume(resume.content, jd.content)
+    optimization_result = await optimize_resume(resume_text, job_description)
     
     # Create optimization record
     optimization = crud.optimization.create(
         db=db,
         obj_in=schemas.OptimizationCreate(
-            resume_id=optimization_in.resume_id,
-            job_description_id=optimization_in.job_description_id,
+            resume_id=None,
+            job_description_id=None,
             result=optimization_result,
             status="completed"
         )
@@ -52,14 +45,14 @@ async def create_optimization(
     current_user.credits -= 1
     db.commit()
     
-    return optimization
+    return optimization_result
 
 @router.get("/", response_model=List[schemas.Optimization])
 def read_optimizations(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve optimizations.
@@ -74,7 +67,7 @@ def read_optimization(
     *,
     db: Session = Depends(deps.get_db),
     optimization_id: int,
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get optimization by ID.
@@ -82,8 +75,26 @@ def read_optimization(
     optimization = crud.optimization.get(db=db, id=optimization_id)
     if not optimization:
         raise HTTPException(status_code=404, detail="Optimization not found")
-    if optimization.resume.user_id != current_user.id:
+    if optimization.user_id != current_user.id:
         raise HTTPException(status_code=403, detail="Not enough permissions")
+    return optimization
+
+@router.delete("/{optimization_id}", response_model=schemas.Optimization)
+def delete_optimization(
+    *,
+    db: Session = Depends(deps.get_db),
+    optimization_id: int,
+    current_user: User = Depends(deps.get_current_active_user),
+) -> Any:
+    """
+    Delete optimization.
+    """
+    optimization = crud.optimization.get(db=db, id=optimization_id)
+    if not optimization:
+        raise HTTPException(status_code=404, detail="Optimization not found")
+    if optimization.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Not enough permissions")
+    optimization = crud.optimization.remove(db=db, id=optimization_id)
     return optimization
 
 @router.post("/export/{optimization_id}")
@@ -92,7 +103,7 @@ async def export_optimization(
     db: Session = Depends(deps.get_db),
     optimization_id: int,
     format: str = Body("pdf"),
-    current_user: models.User = Depends(deps.get_current_active_user),
+    current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Export optimized resume in specified format.

@@ -1,0 +1,21 @@
+Senior Software Developer Position
+
+Requirements:
+- 5+ years of experience in software development
+- Strong proficiency in JavaScript, React, and Node.js
+- Experience with modern web development practices
+- Excellent problem-solving skills
+- Strong communication abilities
+
+Responsibilities:
+- Develop and maintain web applications
+- Collaborate with cross-functional teams
+- Write clean, maintainable code
+- Participate in code reviews
+- Mentor junior developers
+
+Qualifications:
+- Bachelor's degree in Computer Science or related field
+- Experience with agile development methodologies
+- Knowledge of cloud platforms (AWS, Azure, or GCP)
+- Experience with CI/CD pipelines 

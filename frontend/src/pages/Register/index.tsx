@@ -17,17 +17,20 @@ import { useState } from 'react';
 import { register } from '../../services/auth';
 
 interface RegisterProps {
-  onRegister: () => void;
+  onRegister?: () => Promise<void>;
+  isLoading?: boolean;
 }
 
-const Register = ({ onRegister }: RegisterProps) => {
+const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
+  const [internalLoading, setInternalLoading] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
   const { colorMode } = useColorMode();
+
+  const isLoading = externalLoading || internalLoading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,18 +45,21 @@ const Register = ({ onRegister }: RegisterProps) => {
       return;
     }
 
-    setIsLoading(true);
+    setInternalLoading(true);
 
     try {
-      await register(email, password);
-      onRegister();
-      toast({
-        title: 'Registration successful',
-        status: 'success',
-        duration: 3000,
-        isClosable: true,
-      });
-      navigate('/dashboard');
+      if (onRegister) {
+        await onRegister();
+      } else {
+        await register(email, password);
+        toast({
+          title: 'Registration successful',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+        navigate('/dashboard');
+      }
     } catch (error) {
       toast({
         title: 'Registration failed',
@@ -63,7 +69,7 @@ const Register = ({ onRegister }: RegisterProps) => {
         isClosable: true,
       });
     } finally {
-      setIsLoading(false);
+      setInternalLoading(false);
     }
   };
 
