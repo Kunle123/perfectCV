@@ -1,4 +1,4 @@
-# PerfectCV Development Goals
+# PerfectCV Development Goal
 
 ## Infrastructure Setup
 
