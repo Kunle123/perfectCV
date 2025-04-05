@@ -2,6 +2,7 @@ from typing import List, Optional
 from sqlalchemy.orm import Session
 
 from app.crud.base import CRUDBase
+# Fix the import to avoid circular dependency
 from app.models.optimization import Optimization
 from app.schemas.resume import OptimizationCreate, OptimizationUpdate
 
@@ -28,4 +29,4 @@ class CRUDOptimization(CRUDBase[Optimization, OptimizationCreate, OptimizationUp
             .all()
         )
 
-optimization = CRUDOptimization(Optimization) 
+optimization = CRUDOptimization(Optimization)
