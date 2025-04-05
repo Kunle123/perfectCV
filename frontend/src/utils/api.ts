@@ -1,14 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: '/api',  // Use relative URL that will be handled by Vercel rewrites
-  headers: {
-    'Content-Type': 'application/json',
-  },
-}) ;
-
-const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://localhost:8080',
+  baseURL: '/api',  // Changed to use relative URL for Vercel proxy
   headers: {
     'Content-Type': 'application/json',
   },
