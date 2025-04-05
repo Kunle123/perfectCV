@@ -6,8 +6,8 @@ A modern web application that helps job seekers optimize their resumes based on 
 
 - Resume upload and parsing
 - Job description analysis
-- AI-powered resume optimization
-- Credit-based system for optimizations
+- AI-powered resume optimisation
+- Credit-based system for optimisations
 - User authentication
 - Payment integration with Stripe
 - Dark/light mode support
