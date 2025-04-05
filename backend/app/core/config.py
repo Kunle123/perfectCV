@@ -11,7 +11,19 @@ class Settings(BaseSettings):
 
     @property
     def CORS_ORIGINS_LIST(self) -> List[str]:
-        return [origin.strip() for origin in self.CORS_ORIGINS.split(",")]
+        # For development and testing, allow all origins with "*"
+        if self.CORS_ORIGINS == "*":
+            return ["*"]
+        
+        # Process each origin, supporting explicit origins and regex patterns
+        origins = []
+        for origin in self.CORS_ORIGINS.split(","):
+            origin = origin.strip()
+            # Add the origin as-is (FastAPI will handle exact matches)
+            if origin:
+                origins.append(origin)
+                
+        return origins
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./perfectcv.db")
