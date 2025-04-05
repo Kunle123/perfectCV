@@ -5,7 +5,7 @@ import tempfile
 from typing import Dict, Any, List, Optional
 import docx
 import pdfplumber
-import textract
+import docx2txt
 from striprtf.striprtf import rtf_to_text
 from fastapi import UploadFile, HTTPException
 from datetime import datetime
@@ -354,7 +354,7 @@ async def parse_rtf(content: bytes) -> Dict[str, Any]:
 
 async def parse_doc(content: bytes) -> Dict[str, Any]:
     """
-    Parse DOC file content using textract.
+    Parse DOC file content using docx2txt.
     
     Args:
         content: The file content in bytes
@@ -368,8 +368,8 @@ async def parse_doc(content: bytes) -> Dict[str, Any]:
             temp_file.write(content)
             temp_file_path = temp_file.name
         
-        # Use textract to extract text from DOC file
-        raw_text = textract.process(temp_file_path).decode('utf-8')
+        # Use docx2txt to extract text from DOC file
+        raw_text = docx2txt.process(temp_file_path)
         
         # Clean up the temporary file
         os.unlink(temp_file_path)
