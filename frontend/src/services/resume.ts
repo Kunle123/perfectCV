@@ -1,26 +1,20 @@
-import api from '../utils/api';  // Import the main API instance instead of creating a new one
+import api from '../utils/api';  // Import the shared API instance
 
-// Remove these lines:
-// import axios from 'axios';
-// import { API_BASE_URL, API_ENDPOINTS } from '../api/config';
-// 
-// const api = axios.create({
-//   baseURL: API_BASE_URL,
-//   headers: {
-//     'Content-Type': 'application/json',
-//   },
-// });
-// 
-// // Add auth token to requests
-// api.interceptors.request.use((config) => {
-//   const token = localStorage.getItem('token');
-//   if (token) {
-//     config.headers.Authorization = `Bearer ${token}`;
-//   }
-//   return config;
-// });
+interface Resume {
+  id: number;
+  title: string;
+  content: string;
+  original_file_path: string;
+  created_at: string;
+  updated_at: string;
+}
 
-// Then update the upload function to use the correct path:
+interface ResumeCreate {
+  title: string;
+  content: any;
+  original_file_path?: string;
+}
+
 export const uploadResume = async (file: File): Promise<Resume> => {
   const formData = new FormData();
   formData.append('file', file);
@@ -35,7 +29,6 @@ export const uploadResume = async (file: File): Promise<Resume> => {
   return response.data;
 };
 
-// Also update other functions to use relative paths:
 export const getResumes = async (): Promise<Resume[]> => {
   const response = await api.get<Resume[]>('/resumes');
   return response.data;
