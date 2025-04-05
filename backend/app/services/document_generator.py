@@ -36,28 +36,29 @@ def generate_document_pdf(content: str, output_path: str, options: Optional[dict
     if options:
         default_options.update(options)
     
-    # Create HTML content
-    html_content = f"""
+    # Create HTML content - using regular string formatting to avoid f-string with backslashes
+    html_template = """
     <!DOCTYPE html>
     <html>
     <head>
         <meta charset="UTF-8">
         <style>
-            body {{
+            body {
                 font-family: Arial, sans-serif;
                 font-size: 12pt;
                 line-height: 1.5;
-            }}
-            p {{
+            }
+            p {
                 margin-bottom: 10px;
-            }}
+            }
         </style>
     </head>
     <body>
-        {content.replace('\n', '<br>')}
+        %s
     </body>
     </html>
     """
+    html_content = html_template % content.replace('\n', '<br>')
     
     # Generate PDF
     try:
