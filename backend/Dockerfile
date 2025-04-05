@@ -33,6 +33,6 @@ RUN echo "def load(model_name): return type('obj', (object,), {'vocab': type('ob
 # Copy the rest of the application
 COPY . .
 
-EXPOSE 8000
+EXPOSE 8080
 
 CMD ["python", "run.py"]
