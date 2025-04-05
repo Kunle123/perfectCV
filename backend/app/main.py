@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from app.core.config import settings
 from app.api.v1.api import api_router
@@ -11,21 +11,32 @@ app = FastAPI(
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
 
-# Set up CORS middleware with specific origins
+# Add CORS middleware with most permissive settings
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://perfect-cv-snowy.vercel.app"],
-    allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-    expose_headers=["Content-Type", "Authorization"],
-    max_age=86400,  # 24 hours for preflight cache
-) 
+    allow_origins=["*"],
+    allow_credentials=False,  # Must be False when using wildcard origins
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
-# Add explicit OPTIONS handler for preflight requests
-@app.options("/{rest_of_path:path}")
-async def options_handler(request: Request):
-    response = JSONResponse(content={})
+# Add a middleware to manually set CORS headers for all responses
+@app.middleware("http") 
+async def add_cors_headers(request: Request, call_next):
+    # For preflight OPTIONS requests, return an empty 200 response with CORS headers
+    if request.method == "OPTIONS":
+        response = Response()
+        response.headers["Access-Control-Allow-Origin"] = "*"
+        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
+        response.status_code = 200
+        return response
+        
+    # For all other requests, process normally but ensure CORS headers are set
+    response = await call_next(request)
+    response.headers["Access-Control-Allow-Origin"] = "*"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
     return response
 
 # Include API router
