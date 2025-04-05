@@ -1,0 +1,4 @@
+# Minimal requirements for the standalone CV parser
+python-docx>=0.8.11
+PyPDF2>=2.0.0
+striprtf>=0.0.29
