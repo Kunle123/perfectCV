@@ -14,6 +14,33 @@ class ResumeParseError(Exception):
     """Custom exception for resume parsing errors."""
     pass
 
+# Add function alias for compatibility with career_tools.py
+def parse_resume(file_path: str) -> Dict[str, Any]:
+    """
+    Alias for parse_resume_file to maintain compatibility with existing code.
+    Reads a file from disk and parses it.
+    
+    Args:
+        file_path: Path to the resume file
+        
+    Returns:
+        Dict containing parsed resume data
+    """
+    import asyncio
+    
+    with open(file_path, 'rb') as f:
+        content = f.read()
+    filename = os.path.basename(file_path)
+    
+    # Create a synchronous wrapper for the async function
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        result = loop.run_until_complete(parse_resume_file(content, filename))
+        return result
+    finally:
+        loop.close()
+
 async def parse_resume_file(content: bytes, filename: str) -> Dict[str, Any]:
     """
     Parse resume file content based on file extension.
