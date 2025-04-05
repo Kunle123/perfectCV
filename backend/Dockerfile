@@ -20,7 +20,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 
 # Install Python dependencies with specific pydantic version
-RUN pip install --upgrade pip
+# Pin pip version to be compatible with textract 1.6.5
+RUN pip install --upgrade pip==24.0
 RUN pip install pydantic==1.10.8
 RUN pip install psycopg2-binary
 RUN pip install --no-cache-dir -r requirements.txt
