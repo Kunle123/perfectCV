@@ -2,11 +2,18 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Install system dependencies for psycopg2
+# Install system dependencies for psycopg2 and textract
 RUN apt-get update && apt-get install -y \
     gcc \
     python3-dev \
     libpq-dev \
+    # Dependencies for textract
+    antiword \
+    poppler-utils \
+    tesseract-ocr \
+    libtesseract-dev \
+    libxslt1-dev \
+    unrtf \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
