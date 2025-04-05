@@ -13,11 +13,12 @@ app = FastAPI(
 # Replace the existing CORS middleware setup with this
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["https://perfect-cv-snowy.vercel.app"],
-    allow_credentials=False,
-    allow_methods=["*"],
-    allow_headers=["*"],
+    allow_origins=["https://perfect-cv-snowy.vercel.app"],  # Exact match to your frontend URL
+    allow_credentials=True,  # Keep this True since you're specifying exact origin
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],  # Explicit methods
+    allow_headers=["Authorization", "Content-Type"],  # Specific headers
 ) 
+
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
