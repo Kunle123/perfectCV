@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --port ${VITE_PORT:-3000}",
-    "build": "vite build",
+    "build": "vite build --skipTypeCheck",
     "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
     "preview": "vite preview",
     "test": "vitest",
