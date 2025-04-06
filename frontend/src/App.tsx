@@ -2,7 +2,7 @@ import { ChakraProvider } from '@chakra-ui/react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import theme from './theme';
-import { getCurrentUser } from './services/auth';
+import { authService } from './services/auth';
 
 // Pages
 import Home from './pages/Home';
@@ -50,7 +50,7 @@ const App = ({ initialAuthState = false, skipAuthCheck = false }: AppProps) => {
       }
 
       try {
-        const user = await getCurrentUser();
+        const user = await authService.getCurrentUser();
         setIsAuthenticated(!!user);
       } catch (error) {
         setIsAuthenticated(false);
