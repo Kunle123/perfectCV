@@ -6,19 +6,23 @@ export const uploadApi = axios.create({
   headers: {
     'Content-Type': 'multipart/form-data',
     'Origin': 'https://perfect-cv-snowy.vercel.app'
-  },
-  withCredentials: true
+  }
 });
 
 uploadApi.interceptors.request.use(
   (config: AxiosRequestConfig) => {
     // Get token from localStorage
     const token = localStorage.getItem('token');
+    console.log('Upload API - Token exists:', !!token);
+    
     if (token) {
+      console.log('Adding Authorization header with token');
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${token}`,
       };
+    } else {
+      console.warn('No authentication token found for upload request');
     }
 
     // Ensure Origin header is set
@@ -42,16 +46,37 @@ uploadApi.interceptors.request.use(
     }
     return config;
   },
-  (error: Error) => Promise.reject(error)
+  (error: Error) => {
+    console.error('Upload API Request Error:', error);
+    return Promise.reject(error);
+  }
 );
 
 // Add response interceptor for better error handling
 uploadApi.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    console.log(`Upload API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - Status: ${response.status}`);
+    return response;
+  },
   (error) => {
-    if (import.meta.env.DEV) {
-      console.error('Upload API Error:', error.response?.data || error.message);
+    console.error('Upload API Error:', {
+      url: error.config?.url,
+      method: error.config?.method,
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      headers: error.response?.headers,
+    });
+
+    // Handle 401 Unauthorized errors
+    if (error.response?.status === 401) {
+      console.warn('Authentication error: Token may be invalid or expired');
+      localStorage.removeItem('token');
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login';
+      }
     }
+    
     return Promise.reject(error);
   }
 );
