@@ -28,36 +28,20 @@ api.interceptors.request.use(
       console.warn('No authentication token found. Some API requests may fail.');
     }
 
-    // Ensure Origin header is set
-    config.headers = {
-      ...config.headers,
-      'Origin': 'https://perfect-cv-snowy.vercel.app'
-    };
-
-    // For FormData, don't set Content-Type header - let the browser set it with the boundary
-    if (config.data instanceof FormData) {
-      delete config.headers['Content-Type'];
-    }
-
-    // Ensure the URL is correct
-    if (config.url) {
-      config.url = ensureApiUrl(config.url);
-    }
-
-    // Log request details in development mode
+    // Log the request details in development
     if (import.meta.env.DEV) {
-      console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
-      console.log('Request Headers:', config.headers);
-      if (config.data instanceof FormData) {
-        console.log('FormData contents:', Array.from(config.data.entries()));
-      } else {
-        console.log('Request Data:', config.data);
-      }
+      console.log('API Request:', {
+        url: config.url,
+        method: config.method,
+        headers: config.headers,
+        data: config.data,
+      });
     }
+
     return config;
   },
-  (error: Error) => {
-    console.error('Request interceptor error:', error);
+  (error: AxiosError) => {
+    console.error('API Request Error:', error);
     return Promise.reject(error);
   }
 );
@@ -100,8 +84,23 @@ api.interceptors.response.use(
 );
 
 export const apiService = {
-  get: (endpoint: string, config?: AxiosRequestConfig) => api.get(getApiUrl(endpoint), config),
-  post: (endpoint: string, data: any, config?: AxiosRequestConfig) => api.post(getApiUrl(endpoint), data, config),
-  put: (endpoint: string, data: any, config?: AxiosRequestConfig) => api.put(getApiUrl(endpoint), data, config),
-  delete: (endpoint: string, config?: AxiosRequestConfig) => api.delete(getApiUrl(endpoint), config),
+  get: async (url: string, config?: AxiosRequestConfig) => {
+    const apiUrl = getApiUrl(url);
+    return api.get(apiUrl, config);
+  },
+
+  post: async (url: string, data?: any, config?: AxiosRequestConfig) => {
+    const apiUrl = getApiUrl(url);
+    return api.post(apiUrl, data, config);
+  },
+
+  put: async (url: string, data?: any, config?: AxiosRequestConfig) => {
+    const apiUrl = getApiUrl(url);
+    return api.put(apiUrl, data, config);
+  },
+
+  delete: async (url: string, config?: AxiosRequestConfig) => {
+    const apiUrl = getApiUrl(url);
+    return api.delete(apiUrl, config);
+  },
 }; 

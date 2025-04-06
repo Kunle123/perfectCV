@@ -36,9 +36,9 @@ export const authService = {
     try {
       console.log('Attempting login with email:', credentials.email);
       
-      // Convert credentials to FormData
-      const formData = new FormData();
-      formData.append('username', credentials.email); // OAuth2 expects 'username' field
+      // Convert credentials to URLSearchParams for proper form data encoding
+      const formData = new URLSearchParams();
+      formData.append('username', credentials.email);
       formData.append('password', credentials.password);
       
       const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, formData, {
@@ -66,6 +66,7 @@ export const authService = {
         console.log('Login successful and verified');
       } else {
         console.error('No access token in login response');
+        throw new Error('No access token received from server');
       }
       return response.data;
     } catch (error) {
