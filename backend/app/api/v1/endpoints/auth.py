@@ -43,14 +43,14 @@ def login(
         "token_type": "bearer",
     }
 
-@router.post("/register", response_model=schemas.User, status_code=status.HTTP_201_CREATED)
+@router.post("/register", response_model=schemas.Token)
 def register(
     *,
     db: Session = Depends(deps.get_db),
     user_in: schemas.UserCreate,
 ) -> Any:
     """
-    Create new user.
+    Create new user and return access token.
     """
     user = crud.user.get_by_email(db, email=user_in.email)
     if user:
@@ -59,7 +59,15 @@ def register(
             detail="Email already registered",
         )
     user = crud.user.create(db, obj_in=user_in)
-    return user 
+    
+    # Create access token for the new user
+    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+    return {
+        "access_token": security.create_access_token(
+            user.id, expires_delta=access_token_expires
+        ),
+        "token_type": "bearer",
+    }
 
 @router.get("/me", response_model=schemas.User)
 def read_current_user(

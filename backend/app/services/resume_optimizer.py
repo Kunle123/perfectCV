@@ -1,6 +1,6 @@
 import os
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, Tuple
 # from sentence_transformers import SentenceTransformer - commented out for testing
 # from huggingface_hub import hf_hub_download - commented out for testing
 from app.core.config import settings
@@ -132,6 +132,11 @@ async def _ai_optimization(resume_data: Dict[str, Any], job_description: str) ->
         experience = resume_data.get("sections", {}).get("experience", [])
         skills = resume_data.get("sections", {}).get("skills", [])
         
+        # Extract job requirements and skills
+        job_requirements = await _extract_job_requirements(job_description)
+        job_skills = job_requirements.get("skills", [])
+        job_keywords = job_requirements.get("keywords", [])
+        
         # Generate optimization suggestions
         suggestions = []
         
@@ -157,6 +162,10 @@ async def _ai_optimization(resume_data: Dict[str, Any], job_description: str) ->
         
         # Analyze experience
         if experience:
+            # Reorder bullet points based on relevance to job description
+            optimized_experience = await _reorder_experience_bullets(experience, job_skills, job_keywords)
+            
+            # Generate suggestions for experience section
             experience_text = "\n".join([f"{exp.get('title', '')} at {exp.get('company', '')}: {exp.get('description', '')}" for exp in experience])
             
             experience_prompt = f"""
@@ -179,6 +188,9 @@ async def _ai_optimization(resume_data: Dict[str, Any], job_description: str) ->
         
         # Analyze skills against job description
         if skills and job_description:
+            # Enhance skills with job-specific keywords
+            enhanced_skills = await _enhance_skills_with_keywords(skills, job_skills, job_keywords)
+            
             skills_text = "\n".join(skills)
             
             skills_prompt = f"""
@@ -207,12 +219,138 @@ async def _ai_optimization(resume_data: Dict[str, Any], job_description: str) ->
         return {
             "optimized": True,
             "suggestions": suggestions,
-            "method": "AI-powered optimization"
+            "method": "AI-powered optimization",
+            "enhanced_skills": enhanced_skills,
+            "optimized_experience": optimized_experience
         }
     
     except Exception as e:
         logging.error(f"Error in AI optimization: {str(e)}")
         return await _fallback_optimization(resume_data, job_description)
+
+async def _extract_job_requirements(job_description: str) -> Dict[str, List[str]]:
+    """
+    Extract job requirements, skills, and keywords from job description.
+    """
+    prompt = f"""
+    Analyze this job description and extract:
+    1. Key skills required for the job
+    2. Important keywords that should be in a resume
+    3. Main responsibilities
+    
+    Job Description:
+    {job_description}
+    
+    Format your response as a JSON object with the following structure:
+    {{
+        "skills": ["skill1", "skill2", ...],
+        "keywords": ["keyword1", "keyword2", ...],
+        "responsibilities": ["responsibility1", "responsibility2", ...]
+    }}
+    """
+    
+    response = client.chat.completions.create(
+        model="gpt-3.5-turbo",
+        messages=[
+            {"role": "system", "content": "You are a job description analyzer. Extract key requirements and skills from job descriptions."},
+            {"role": "user", "content": prompt}
+        ],
+        max_tokens=500
+    )
+    
+    try:
+        # Parse the JSON response
+        import json
+        result = json.loads(response.choices[0].message.content)
+        return result
+    except:
+        # Fallback if JSON parsing fails
+        return {
+            "skills": [],
+            "keywords": [],
+            "responsibilities": []
+        }
+
+async def _reorder_experience_bullets(
+    experience: List[Dict[str, Any]], 
+    job_skills: List[str], 
+    job_keywords: List[str]
+) -> List[Dict[str, Any]]:
+    """
+    Reorder bullet points in experience section based on relevance to job description.
+    """
+    optimized_experience = []
+    
+    for exp in experience:
+        # Get bullet points
+        bullets = exp.get("bullets", [])
+        if not bullets:
+            optimized_experience.append(exp)
+            continue
+        
+        # Calculate relevance score for each bullet point
+        bullet_scores = []
+        for bullet in bullets:
+            # Calculate similarity scores
+            bullet_embedding = model.encode(bullet)
+            jd_embeddings = model.encode(job_skills + job_keywords)
+            
+            # Get maximum similarity score
+            similarities = [model.cosine_similarity(bullet_embedding, jd_emb) for jd_emb in jd_embeddings]
+            max_similarity = max(similarities)
+            
+            # Check for keyword matches
+            keyword_matches = sum(1 for keyword in job_keywords if keyword.lower() in bullet.lower())
+            
+            # Calculate final score (70% similarity, 30% keyword matches)
+            final_score = (0.7 * max_similarity) + (0.3 * min(keyword_matches / 3, 1.0))
+            
+            bullet_scores.append((bullet, final_score))
+        
+        # Sort bullet points by relevance score
+        bullet_scores.sort(key=lambda x: x[1], reverse=True)
+        
+        # Reorder bullet points
+        exp["bullets"] = [bullet for bullet, _ in bullet_scores]
+        optimized_experience.append(exp)
+    
+    return optimized_experience
+
+async def _enhance_skills_with_keywords(
+    resume_skills: List[str], 
+    job_skills: List[str], 
+    job_keywords: List[str]
+) -> List[str]:
+    """
+    Enhance skills with job-specific keywords.
+    """
+    enhanced_skills = []
+    
+    for skill in resume_skills:
+        # Check if skill is already in job skills or keywords
+        if skill in job_skills or skill in job_keywords:
+            enhanced_skills.append(skill)
+            continue
+        
+        # Check for partial matches
+        for job_skill in job_skills:
+            if job_skill.lower() in skill.lower() or skill.lower() in job_skill.lower():
+                # Use the more specific version
+                if len(job_skill) > len(skill):
+                    enhanced_skills.append(job_skill)
+                else:
+                    enhanced_skills.append(skill)
+                break
+        else:
+            # No match found, keep original skill
+            enhanced_skills.append(skill)
+    
+    # Add missing job skills
+    for job_skill in job_skills:
+        if not any(job_skill.lower() in skill.lower() for skill in enhanced_skills):
+            enhanced_skills.append(job_skill)
+    
+    return enhanced_skills
 
 async def _fallback_optimization(resume_data: Dict[str, Any], job_description: Optional[str] = None) -> Dict[str, Any]:
     """

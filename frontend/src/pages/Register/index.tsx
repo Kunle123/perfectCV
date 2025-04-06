@@ -51,20 +51,42 @@ const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => 
       if (onRegister) {
         await onRegister();
       } else {
+        console.log('Attempting registration with email:', email);
         const response = await authService.register({ email, password });
-        localStorage.setItem('token', response.access_token);
-        toast({
-          title: 'Registration successful',
-          status: 'success',
-          duration: 3000,
-          isClosable: true,
-        });
-        navigate('/dashboard');
+        console.log('Registration response:', response);
+        
+        if (response.access_token) {
+          console.log('Token received from registration, storing in localStorage');
+          localStorage.setItem('token', response.access_token);
+          
+          // Verify the token immediately after registration
+          console.log('Verifying token with getCurrentUser');
+          const user = await authService.getCurrentUser();
+          console.log('getCurrentUser result:', user);
+          
+          if (!user) {
+            console.error('Token verification failed - no user returned');
+            throw new Error('Failed to verify authentication token');
+          }
+          
+          console.log('Registration successful and verified');
+          toast({
+            title: 'Registration successful',
+            status: 'success',
+            duration: 3000,
+            isClosable: true,
+          });
+          navigate('/dashboard');
+        } else {
+          console.error('No access token in registration response');
+          throw new Error('No access token received from server');
+        }
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Registration error:', error);
       toast({
         title: 'Registration failed',
-        description: 'Please try again with different credentials',
+        description: error.response?.data?.detail || 'Please try again with different credentials',
         status: 'error',
         duration: 3000,
         isClosable: true,

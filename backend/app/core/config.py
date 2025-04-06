@@ -20,6 +20,12 @@ class Settings(BaseSettings):
             origin = origin.strip()
             if origin:
                 origins.append(origin)
+        
+        # Always include the Vercel domain for safety
+        vercel_domain = "https://perfect-cv-snowy.vercel.app"
+        if vercel_domain not in origins:
+            origins.append(vercel_domain)
+            
         return origins
 
     # Database

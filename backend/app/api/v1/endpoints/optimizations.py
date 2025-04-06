@@ -5,7 +5,7 @@ from sqlalchemy.orm import Session
 from app import crud, schemas
 from app.api import deps
 from app.models.user import User
-from app.services.resume_optimizer import optimize_resume
+from app.services.resume_optimizer import optimize_resume, _extract_job_requirements
 
 router = APIRouter()
 
@@ -27,8 +27,14 @@ async def optimize_resume_endpoint(
             detail="Insufficient credits. Please purchase more credits to continue."
         )
     
+    # Extract job requirements
+    job_requirements = await _extract_job_requirements(job_description)
+    
     # Optimize resume
     optimization_result = await optimize_resume(resume_text, job_description)
+    
+    # Add job requirements to the result
+    optimization_result["job_requirements"] = job_requirements
     
     # Create optimization record
     optimization = crud.optimization.create(
