@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { login } from '../../services/auth';
+import { authService } from '../../services/auth';
 
 interface LoginProps {
   onLogin?: () => Promise<void>;
@@ -39,7 +39,9 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
       if (onLogin) {
         await onLogin();
       } else {
-        await login({ email, password });
+        const response = await authService.login({ email, password });
+        // Store the token
+        localStorage.setItem('token', response.access_token);
         toast({
           title: 'Login successful',
           status: 'success',
