@@ -1,4 +1,4 @@
-import axios, { AxiosRequestConfig, AxiosError } from 'axios';
+import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
 import { API_BASE_URL, getApiUrl } from './config';
 
 // Create API instance
@@ -32,7 +32,7 @@ api.interceptors.request.use(
 
 // Add response interceptor
 api.interceptors.response.use(
-  (response) => response,
+  (response: AxiosResponse) => response,
   (error: AxiosError) => {
     // Handle 401 Unauthorized errors
     if (error.response?.status === 401) {
