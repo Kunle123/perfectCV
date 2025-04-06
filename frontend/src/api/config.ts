@@ -5,7 +5,7 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL
     : import.meta.env.VITE_API_URL.endsWith('/api')
       ? `${import.meta.env.VITE_API_URL}/v1`  
       : `${import.meta.env.VITE_API_URL}/api/v1`
-  : 'http://localhost:8001/api/v1';
+  : 'https://perfectcv-production.up.railway.app/api/v1';
 
 // Log the API base URL in development mode
 if (import.meta.env.DEV) {
@@ -56,12 +56,20 @@ export const API_ENDPOINTS = {
   RESUMES: {
     BASE: 'resumes',
     UPLOAD: 'resumes/upload',
-    DOWNLOAD: 'resumes/download',
+    LIST: 'resumes',
+    DETAIL: (id: string) => `resumes/${id}`,
+    CREATE: 'resumes',
+    UPDATE: (id: string) => `resumes/${id}`,
+    DELETE: (id: string) => `resumes/${id}`,
   },
   OPTIMIZATIONS: {
     BASE: 'optimizations',
+    LIST: 'optimizations',
+    DETAIL: (id: string) => `optimizations/${id}`,
+    CREATE: 'optimizations',
     OPTIMIZE_RESUME: 'optimizations/optimize-resume',
     OPTIMIZE_RESUME_WITH_JOB_DESCRIPTION: 'optimizations/optimize-resume-with-job-description',
+    EXPORT: (id: string) => `optimizations/${id}/export`,
   },
   JOB_DESCRIPTIONS: {
     BASE: 'job-descriptions',
