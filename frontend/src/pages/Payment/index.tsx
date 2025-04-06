@@ -15,7 +15,7 @@ import {
 } from "@chakra-ui/react";
 import { useNavigate } from "react-router-dom";
 import { useState } from "react";
-import { createCheckoutSession } from "../../services/payment";
+import { paymentService } from "../../services/payment";
 
 const CREDIT_PACKAGES = [
   {
@@ -37,7 +37,7 @@ const Payment = () => {
   const handlePayment = async () => {
     setIsLoading(true);
     try {
-      const session = await createCheckoutSession(parseInt(selectedPackage));
+      const session = await paymentService.createCheckoutSession(parseInt(selectedPackage));
       // Redirect to Stripe Checkout
       window.location.href = session.url;
     } catch (error) {

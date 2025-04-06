@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useNavigate } from 'react-router-dom';
 import { Box, Button, Container, FormControl, FormLabel, Heading, Input, Textarea, VStack, Text, useToast, Divider } from '@chakra-ui/react';
-import { generateCoverLetter } from '../../services/careerTools';
+import { careerToolsService } from '../../services/careerTools';
 
 const CoverLetterGenerator = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm();
@@ -39,7 +39,7 @@ const CoverLetterGenerator = () => {
         formData.append('additional_notes', data.additionalNotes);
       }
 
-      const response = await generateCoverLetter(formData);
+      const response = await careerToolsService.generateCoverLetter(resumeFile);
       
       // Navigate to cover letter result page
       navigate(`/cover-letter-result/${response.id}`);

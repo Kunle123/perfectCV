@@ -27,7 +27,7 @@ import {
   Textarea,
   Input
 } from '@chakra-ui/react';
-import { analyzeSkillsGap, addUserSkills } from '../../services/careerTools';
+import { careerToolsService } from '../../services/careerTools';
 
 const SkillsGapAnalysis = () => {
   const { resumeId, jobDescriptionId } = useParams();
@@ -42,7 +42,7 @@ const SkillsGapAnalysis = () => {
   const startAnalysis = async () => {
     try {
       setAnalyzing(true);
-      const data = await analyzeSkillsGap(resumeId, jobDescriptionId);
+      const data = await careerToolsService.analyzeSkillsGap({ resumeId, jobDescriptionId });
       setAnalysis(data.analysis_data);
       setLoading(false);
     } catch (error) {
@@ -69,7 +69,7 @@ const SkillsGapAnalysis = () => {
   const handleSubmitSkills = async () => {
     try {
       setSubmittingSkills(true);
-      const result = await addUserSkills(analysis.id, userSkills);
+      const result = await careerToolsService.addUserSkills(analysis.id, userSkills);
       toast({
         title: 'Skills added successfully',
         description: 'Your skills have been incorporated into your resume',

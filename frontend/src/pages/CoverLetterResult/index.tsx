@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Box, Button, Container, Heading, Text, VStack, HStack, Divider, useToast, Tabs, TabList, TabPanels, Tab, TabPanel, Spinner } from '@chakra-ui/react';
-import { getCoverLetter, exportCoverLetter } from '../../services/careerTools';
+import { careerToolsService } from '../../services/careerTools';
 
 const CoverLetterResult = () => {
   const { id } = useParams();
@@ -14,7 +14,7 @@ const CoverLetterResult = () => {
   useEffect(() => {
     const fetchCoverLetter = async () => {
       try {
-        const data = await getCoverLetter(id);
+        const data = await careerToolsService.getCoverLetter(id);
         setCoverLetter(data.cover_letter_data);
       } catch (error) {
         toast({
@@ -37,7 +37,7 @@ const CoverLetterResult = () => {
   const handleExport = async (format) => {
     try {
       setExporting(true);
-      await exportCoverLetter(id, format);
+      await careerToolsService.exportCoverLetter(id, format);
       toast({
         title: 'Export successful',
         description: `Cover letter exported as ${format.toUpperCase()}`,
