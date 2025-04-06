@@ -7,42 +7,39 @@ class Settings(BaseSettings):
     PROJECT_NAME: str = "PerfectCV"
     
     # CORS
-    CORS_ORIGINS: str = "http://localhost:3000,http://localhost:3001,http://localhost:3002"
+    CORS_ORIGINS: str = os.getenv(
+        "CORS_ORIGINS",
+        "http://localhost:3000,http://localhost:3001,http://localhost:3002,https://perfect-cv-snowy.vercel.app"
+    )
 
     @property
     def CORS_ORIGINS_LIST(self) -> List[str]:
-        # For development and testing, allow all origins with "*"
-        if self.CORS_ORIGINS == "*":
-            return ["*"]
-        
-        # Process each origin, supporting explicit origins and regex patterns
+        # Process each origin, supporting explicit origins
         origins = []
         for origin in self.CORS_ORIGINS.split(","):
             origin = origin.strip()
-            # Add the origin as-is (FastAPI will handle exact matches)
             if origin:
                 origins.append(origin)
-                
         return origins
 
     # Database
     DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./perfectcv.db")
 
     # JWT
-    JWT_SECRET_KEY: str = "your-secret-key-here"  # Change in production
+    JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-here")
     JWT_ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
 
     # OpenAI
-    OPENAI_API_KEY: str = "your-openai-api-key"
+    OPENAI_API_KEY: str = os.getenv("OPENAI_API_KEY", "your-openai-api-key")
 
     # Stripe
-    STRIPE_SECRET_KEY: str = "your-stripe-secret-key"
-    STRIPE_WEBHOOK_SECRET: str = "your-stripe-webhook-secret"
+    STRIPE_SECRET_KEY: str = os.getenv("STRIPE_SECRET_KEY", "your-stripe-secret-key")
+    STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "your-stripe-webhook-secret")
 
     # Server
-    PORT: int = 8001
-    HOST: str = "0.0.0.0"
+    PORT: int = int(os.getenv("PORT", "8001"))
+    HOST: str = os.getenv("HOST", "0.0.0.0")
 
     class Config:
         case_sensitive = True
