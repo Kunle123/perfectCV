@@ -39,8 +39,12 @@ const ResumeUpload = () => {
   // Check authentication status on component mount
   useEffect(() => {
     const checkAuth = async () => {
+      console.log('ResumeUpload: Checking authentication status');
       const token = authService.getToken();
+      console.log('ResumeUpload: Token exists:', !!token);
+      
       if (!token) {
+        console.log('ResumeUpload: No token found, redirecting to login');
         toast({
           title: 'Authentication required',
           description: 'Please log in to upload a resume',
@@ -53,9 +57,13 @@ const ResumeUpload = () => {
       }
       
       try {
+        console.log('ResumeUpload: Fetching current user');
         const user = await authService.getCurrentUser();
+        console.log('ResumeUpload: User data received:', user);
         setIsAuthenticated(!!user);
+        
         if (!user) {
+          console.log('ResumeUpload: No user data returned, redirecting to login');
           toast({
             title: 'Authentication error',
             description: 'Your session may have expired. Please log in again.',
@@ -64,9 +72,11 @@ const ResumeUpload = () => {
             isClosable: true,
           });
           navigate('/login');
+        } else {
+          console.log('ResumeUpload: Authentication successful');
         }
       } catch (error) {
-        console.error('Error checking authentication:', error);
+        console.error('ResumeUpload: Error checking authentication:', error);
         setIsAuthenticated(false);
         toast({
           title: 'Authentication error',

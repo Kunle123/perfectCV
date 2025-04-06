@@ -16,7 +16,10 @@ api.interceptors.request.use(
   (config: AxiosRequestConfig) => {
     // Get token from localStorage
     const token = localStorage.getItem('token');
+    console.log('API Request Interceptor - Token exists:', !!token);
+    
     if (token) {
+      console.log('Adding Authorization header with token');
       config.headers = {
         ...config.headers,
         Authorization: `Bearer ${token}`,
@@ -61,7 +64,10 @@ api.interceptors.request.use(
 
 // Add response interceptor
 api.interceptors.response.use(
-  (response: AxiosResponse) => response,
+  (response: AxiosResponse) => {
+    console.log(`API Response: ${response.config.method?.toUpperCase()} ${response.config.url} - Status: ${response.status}`);
+    return response;
+  },
   (error: AxiosError) => {
     // Log detailed error information
     console.error('API Error:', {

@@ -34,17 +34,31 @@ interface RegisterData {
 export const authService = {
   login: async (credentials: LoginCredentials) => {
     try {
+      console.log('Attempting login with email:', credentials.email);
       const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      console.log('Login response:', response.data);
+      
       if (response.data.access_token) {
+        console.log('Token received, storing in localStorage');
         localStorage.setItem('token', response.data.access_token);
+        
         // Verify the token immediately after login
+        console.log('Verifying token with getCurrentUser');
         const user = await authService.getCurrentUser();
+        console.log('getCurrentUser result:', user);
+        
         if (!user) {
+          console.error('Token verification failed - no user returned');
           throw new Error('Failed to verify authentication token');
         }
+        
+        console.log('Login successful and verified');
+      } else {
+        console.error('No access token in login response');
       }
       return response.data;
     } catch (error) {
+      console.error('Login error:', error);
       localStorage.removeItem('token');
       throw error;
     }
@@ -58,31 +72,44 @@ export const authService = {
   getCurrentUser: async () => {
     try {
       const token = localStorage.getItem('token');
+      console.log('getCurrentUser - token exists:', !!token);
+      
       if (!token) {
+        console.log('No token found in localStorage');
         return null;
       }
+      
+      console.log('Fetching user data from API');
       const response = await apiService.get(API_ENDPOINTS.AUTH.ME);
+      console.log('User data received:', response.data);
       return response.data;
     } catch (error) {
+      console.error('getCurrentUser error:', error);
       localStorage.removeItem('token');
       return null;
     }
   },
 
   getToken: () => {
-    return localStorage.getItem('token');
+    const token = localStorage.getItem('token');
+    console.log('getToken called - token exists:', !!token);
+    return token;
   },
 
   isAuthenticated: async () => {
     try {
+      console.log('isAuthenticated check started');
       const user = await authService.getCurrentUser();
+      console.log('isAuthenticated result:', !!user);
       return !!user;
     } catch (error) {
+      console.error('isAuthenticated error:', error);
       return false;
     }
   },
 
   logout: () => {
+    console.log('Logging out - removing token');
     localStorage.removeItem('token');
     window.location.href = '/login';
   },
