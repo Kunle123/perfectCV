@@ -5,7 +5,7 @@ from typing import Dict, Any
 
 from app.core.config import settings
 from app.api import deps
-from app.crud import crud_user
+from app.crud import user as crud_user
 from app.schemas.payment import PaymentVerification
 
 router = APIRouter()
