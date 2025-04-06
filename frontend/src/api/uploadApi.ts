@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig } from 'axios';
-import { API_BASE_URL } from './config';
+import { API_BASE_URL, API_ENDPOINTS } from './config';
 
 export const uploadApi = axios.create({
   baseURL: API_BASE_URL,
@@ -23,4 +23,8 @@ export const uploadService = {
     const response = await uploadApi.post(endpoint, formData);
     return response.data;
   },
+  uploadResume: async (formData: FormData) => {
+    const response = await uploadApi.post(API_ENDPOINTS.RESUMES.UPLOAD, formData);
+    return response.data;
+  }
 }; 
