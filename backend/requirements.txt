@@ -36,3 +36,6 @@ pdfplumber==0.7.1
 striprtf==0.0.29
 # Alternative for DOC files
 docx2txt==0.8
+
+# Payment processing
+stripe==5.4.0
