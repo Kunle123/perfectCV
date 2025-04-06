@@ -50,49 +50,24 @@ export const API_ENDPOINTS = {
   AUTH: {
     LOGIN: 'auth/login',
     REGISTER: 'auth/register',
-    ME: 'auth/me',
+    REFRESH: 'auth/refresh',
+    LOGOUT: 'auth/logout',
   },
   RESUMES: {
-    LIST: 'resumes',
-    CREATE: 'resumes',
+    BASE: 'resumes',
     UPLOAD: 'resumes/upload',
-    DETAIL: (id: string) => `resumes/${id}`,
-    UPDATE: (id: string) => `resumes/${id}`,
-    DELETE: (id: string) => `resumes/${id}`,
-  },
-  JOB_DESCRIPTIONS: {
-    LIST: 'job-descriptions',
-    CREATE: 'job-descriptions',
-    UPLOAD: 'job-descriptions/upload',
-    DETAIL: (id: string) => `job-descriptions/${id}`,
-    UPDATE: (id: string) => `job-descriptions/${id}`,
-    DELETE: (id: string) => `job-descriptions/${id}`,
+    DOWNLOAD: 'resumes/download',
   },
   OPTIMIZATIONS: {
-    LIST: 'optimizations',
-    CREATE: 'optimizations',
-    DETAIL: (id: string) => `optimizations/${id}`,
-    EXPORT: (id: string) => `optimizations/export/${id}`,
+    BASE: 'optimizations',
+    OPTIMIZE_RESUME: 'optimizations/optimize-resume',
+    OPTIMIZE_RESUME_WITH_JOB_DESCRIPTION: 'optimizations/optimize-resume-with-job-description',
   },
-  CAREER_TOOLS: {
-    COVER_LETTER: {
-      GENERATE: 'career-tools/generate-cover-letter-upload',
-      GET: (id: string) => `career-tools/cover-letter/${id}`,
-      EXPORT: (id: string, format: string) => `career-tools/export-cover-letter/${id}?format=${format}`,
-    },
-    SKILLS_GAP: {
-      ANALYZE: 'career-tools/analyze-skills-gap',
-      ADD_USER_SKILLS: (analysisId: string) => `career-tools/add-user-skills/${analysisId}`,
-    },
+  JOB_DESCRIPTIONS: {
+    BASE: 'job-descriptions',
   },
-  PAYMENTS: {
-    VERIFY: 'payments/verify',
-    CREATE_CHECKOUT: 'payments/create-checkout-session',
-  },
-  USERS: {
-    CREDITS: {
-      GET: 'users/credits',
-      PURCHASE: 'users/credits/purchase',
-    },
+  USER: {
+    PROFILE: 'user/profile',
+    CREDITS: 'user/credits',
   },
 };
