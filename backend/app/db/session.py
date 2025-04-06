@@ -27,12 +27,12 @@ def setup_engine():
             create_database_url(),
             poolclass=QueuePool,
             pool_pre_ping=True,
-            pool_size=5,
-            max_overflow=10,
+            pool_size=settings.SQLALCHEMY_POOL_SIZE,
+            max_overflow=settings.SQLALCHEMY_MAX_OVERFLOW,
             echo=settings.SQLALCHEMY_ECHO,
             future=True,  # Enable SQLAlchemy 2.0 features
-            pool_timeout=30,  # Connection timeout in seconds
-            pool_recycle=1800,  # Recycle connections every 30 minutes
+            pool_timeout=settings.SQLALCHEMY_POOL_TIMEOUT,  # Connection timeout in seconds
+            pool_recycle=settings.SQLALCHEMY_POOL_RECYCLE,  # Recycle connections every 30 minutes
             connect_args={"connect_timeout": 30}  # PostgreSQL specific connection timeout
         )
 
