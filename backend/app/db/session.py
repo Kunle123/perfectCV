@@ -22,19 +22,26 @@ def create_database_url() -> str:
 def setup_engine():
     """Set up the SQLAlchemy engine with proper configuration."""
     try:
-        # Create SQLAlchemy engine with proper configuration
-        engine = create_engine(
-            create_database_url(),
-            poolclass=QueuePool,
-            pool_pre_ping=True,
-            pool_size=settings.SQLALCHEMY_POOL_SIZE,
-            max_overflow=settings.SQLALCHEMY_MAX_OVERFLOW,
-            echo=settings.SQLALCHEMY_ECHO,
-            future=True,  # Enable SQLAlchemy 2.0 features
-            pool_timeout=settings.SQLALCHEMY_POOL_TIMEOUT,  # Connection timeout in seconds
-            pool_recycle=settings.SQLALCHEMY_POOL_RECYCLE,  # Recycle connections every 30 minutes
-            connect_args={"connect_timeout": 30}  # PostgreSQL specific connection timeout
-        )
+        # Base configuration for all database types
+        engine_config = {
+            "poolclass": QueuePool,
+            "pool_pre_ping": True,
+            "pool_size": settings.SQLALCHEMY_POOL_SIZE,
+            "max_overflow": settings.SQLALCHEMY_MAX_OVERFLOW,
+            "echo": settings.SQLALCHEMY_ECHO,
+            "future": True,  # Enable SQLAlchemy 2.0 features
+            "pool_timeout": settings.SQLALCHEMY_POOL_TIMEOUT,
+            "pool_recycle": settings.SQLALCHEMY_POOL_RECYCLE,
+        }
+
+        # Add database-specific configuration
+        if settings.DATABASE_URL.startswith("postgresql"):
+            engine_config["connect_args"] = {"connect_timeout": 30}
+        elif settings.DATABASE_URL.startswith("sqlite"):
+            engine_config["connect_args"] = {"check_same_thread": False}
+
+        # Create SQLAlchemy engine with configuration
+        engine = create_engine(create_database_url(), **engine_config)
 
         # Add engine event listeners for better debugging
         @event.listens_for(engine, "connect")
