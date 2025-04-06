@@ -1,5 +1,5 @@
 import axios, { AxiosRequestConfig, AxiosError, AxiosResponse } from 'axios';
-import { API_BASE_URL, getApiUrl } from './config';
+import { API_BASE_URL, getApiUrl, ensureApiUrl } from './config';
 
 // Create API instance
 const api = axios.create({
@@ -28,6 +28,11 @@ api.interceptors.request.use(
       ...config.headers,
       'Origin': 'https://perfect-cv-snowy.vercel.app'
     };
+
+    // Ensure the URL is correct
+    if (config.url) {
+      config.url = ensureApiUrl(config.url);
+    }
 
     if (import.meta.env.DEV) {
       console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
