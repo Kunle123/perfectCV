@@ -1,6 +1,4 @@
 // Simplified server-side proxy that handles path normalization
-// This focuses solely on fixing path duplication issues
-
 export default async function handler(req, res) {
   // Get the path and query parameters
   const { path } = req.query;
@@ -92,4 +90,3 @@ export default async function handler(req, res) {
     });
   }
 }
-
