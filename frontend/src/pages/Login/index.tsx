@@ -11,6 +11,7 @@ import {
   Text,
   useColorMode,
   useToast,
+  FormErrorMessage,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
@@ -25,14 +26,45 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [internalLoading, setInternalLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
   const navigate = useNavigate();
   const toast = useToast();
   const { colorMode } = useColorMode();
 
   const isLoading = externalLoading || internalLoading;
 
+  const validateForm = () => {
+    let isValid = true;
+    setEmailError('');
+    setPasswordError('');
+
+    if (!email) {
+      setEmailError('Email is required');
+      isValid = false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setEmailError('Please enter a valid email address');
+      isValid = false;
+    }
+
+    if (!password) {
+      setPasswordError('Password is required');
+      isValid = false;
+    } else if (password.length < 6) {
+      setPasswordError('Password must be at least 6 characters long');
+      isValid = false;
+    }
+
+    return isValid;
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
     setInternalLoading(true);
 
     try {
@@ -40,8 +72,13 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
         await onLogin();
       } else {
         const response = await authService.login({ email, password });
-        // Store the token
-        localStorage.setItem('token', response.access_token);
+        
+        // Verify authentication was successful
+        const isAuthenticated = await authService.isAuthenticated();
+        if (!isAuthenticated) {
+          throw new Error('Authentication verification failed');
+        }
+
         toast({
           title: 'Login successful',
           status: 'success',
@@ -50,10 +87,11 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
         });
         navigate('/dashboard');
       }
-    } catch (error) {
+    } catch (error: any) {
+      console.error('Login error:', error);
       toast({
         title: 'Login failed',
-        description: 'Invalid email or password',
+        description: error.response?.data?.detail || 'Invalid email or password',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -76,7 +114,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
 
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
-              <FormControl isRequired>
+              <FormControl isRequired isInvalid={!!emailError}>
                 <FormLabel>Email</FormLabel>
                 <Input
                   type="email"
@@ -84,9 +122,10 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                 />
+                <FormErrorMessage>{emailError}</FormErrorMessage>
               </FormControl>
 
-              <FormControl isRequired>
+              <FormControl isRequired isInvalid={!!passwordError}>
                 <FormLabel>Password</FormLabel>
                 <Input
                   type="password"
@@ -94,6 +133,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                 />
+                <FormErrorMessage>{passwordError}</FormErrorMessage>
               </FormControl>
 
               <Button type="submit" colorScheme="blue" size="lg" isLoading={isLoading}>

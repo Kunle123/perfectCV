@@ -33,11 +33,21 @@ interface RegisterData {
 
 export const authService = {
   login: async (credentials: LoginCredentials) => {
-    const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
-    if (response.data.access_token) {
-      localStorage.setItem('token', response.data.access_token);
+    try {
+      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      if (response.data.access_token) {
+        localStorage.setItem('token', response.data.access_token);
+        // Verify the token immediately after login
+        const user = await authService.getCurrentUser();
+        if (!user) {
+          throw new Error('Failed to verify authentication token');
+        }
+      }
+      return response.data;
+    } catch (error) {
+      localStorage.removeItem('token');
+      throw error;
     }
-    return response.data;
   },
 
   register: async (data: RegisterData) => {
@@ -61,6 +71,15 @@ export const authService = {
 
   getToken: () => {
     return localStorage.getItem('token');
+  },
+
+  isAuthenticated: async () => {
+    try {
+      const user = await authService.getCurrentUser();
+      return !!user;
+    } catch (error) {
+      return false;
+    }
   },
 
   logout: () => {
