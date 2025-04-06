@@ -87,7 +87,19 @@ def read_current_user(
     Get current user.
     """
     try:
-        return current_user
+        # Transform SQLAlchemy model to dict
+        user_dict = {
+            "id": current_user.id,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "is_active": current_user.is_active,
+            "is_superuser": current_user.is_superuser,
+            "credits": current_user.credits,
+            "stripe_customer_id": current_user.stripe_customer_id
+        }
+        
+        # Create and return Pydantic model
+        return schemas.User(**user_dict)
     except Exception as e:
         logger.error(f"Error retrieving current user: {str(e)}")
         raise HTTPException(

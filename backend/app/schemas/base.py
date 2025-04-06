@@ -1,10 +1,9 @@
 from datetime import datetime
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
 
 class BaseSchema(BaseModel):
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class TimestampedSchema(BaseSchema):
     created_at: datetime
@@ -15,7 +14,7 @@ class UserBase(BaseSchema):
     full_name: Optional[str] = None
     is_active: Optional[bool] = True
     is_superuser: bool = False
-    credits: float = 0.0
+    credits: float = Field(default=0.0, ge=0.0)
 
 class UserCreate(UserBase):
     password: str
@@ -25,9 +24,7 @@ class UserUpdate(UserBase):
 
 class UserInDBBase(UserBase):
     id: int
-
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 class User(UserInDBBase):
     pass

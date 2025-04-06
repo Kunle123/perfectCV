@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, ConfigDict
 
 class UserBase(BaseModel):
     """Base user schema with common attributes."""
@@ -8,6 +8,9 @@ class UserBase(BaseModel):
     is_active: bool = True
     is_superuser: bool = False
     credits: int = 10
+    stripe_customer_id: Optional[str] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 class UserCreate(UserBase):
     """Schema for creating a new user."""
@@ -16,10 +19,17 @@ class UserCreate(UserBase):
 class UserUpdate(UserBase):
     """Schema for updating a user."""
     password: Optional[str] = None
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    is_active: Optional[bool] = None
+    is_superuser: Optional[bool] = None
+    credits: Optional[int] = None
+    stripe_customer_id: Optional[str] = None
 
 class User(UserBase):
     """Schema for user responses."""
     id: int
 
-    class Config:
-        from_attributes = True 
+class UserInDB(User):
+    """Schema for user in database."""
+    hashed_password: str 

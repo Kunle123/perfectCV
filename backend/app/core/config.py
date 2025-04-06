@@ -1,6 +1,7 @@
 from typing import List, Optional
 import os
-from pydantic import BaseSettings, validator
+from pydantic_settings import BaseSettings
+from pydantic import field_validator
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
@@ -44,12 +45,14 @@ class Settings(BaseSettings):
     STRIPE_WEBHOOK_SECRET: str = os.getenv("STRIPE_WEBHOOK_SECRET", "your-stripe-webhook-secret")
 
     # Server
-    PORT: int = int(os.getenv("PORT", "8001"))
+    PORT: int = int(os.getenv("PORT", "8080"))  # Default to Railway's port
     HOST: str = os.getenv("HOST", "0.0.0.0")
 
-    class Config:
-        case_sensitive = True
-        env_file = os.getenv("ENV_FILE", ".env")
+    model_config = {
+        "case_sensitive": True,
+        "env_file": os.getenv("ENV_FILE", ".env"),
+        "extra": "allow"  # Allow extra fields in the settings
+    }
 
 # Create test settings if in test environment
 if os.getenv("ENV_FILE") == "tests/.env.test":

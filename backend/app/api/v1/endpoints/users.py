@@ -1,43 +1,50 @@
 from typing import Any, List
 
-from fastapi import APIRouter, Body, Depends, HTTPException
+from fastapi import APIRouter, Body, Depends, HTTPException, status
 from fastapi.encoders import jsonable_encoder
-from pydantic import EmailStr
+from pydantic import EmailStr, ValidationError
 from sqlalchemy.orm import Session
+from sqlalchemy import select
 
 from app import crud, models, schemas
 from app.api import deps
 from app.core.config import settings
 from app.models.user import User
-import logging
-import sqlalchemy.exc
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from app.schemas.user import UserInDB
+from app.core.logging import logger
 
 router = APIRouter()
 
 @router.get("/me", response_model=schemas.User)
 def read_user_me(
-    current_user: User = Depends(deps.get_current_active_user),
+    current_user: UserInDB = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Get current user.
     """
     try:
-        return current_user
-    except sqlalchemy.exc.SQLAlchemyError as e:
-        logger.error(f"Database error while retrieving current user: {str(e)}")
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="A database error occurred while retrieving the current user.",
-        )
+        logger.debug(f"Retrieved current user: {current_user.email}")
+        
+        # Create User model from UserInDB
+        user_dict = {
+            "id": current_user.id,
+            "email": current_user.email,
+            "full_name": current_user.full_name,
+            "is_active": current_user.is_active,
+            "is_superuser": current_user.is_superuser,
+            "credits": current_user.credits,
+            "stripe_customer_id": current_user.stripe_customer_id
+        }
+        logger.debug(f"User data: {user_dict}")
+        
+        # Return the User model directly since the response_model will handle the conversion
+        return schemas.User(**user_dict)
+            
     except Exception as e:
-        logger.error(f"Unexpected error while retrieving current user: {str(e)}")
+        logger.error(f"Error retrieving user: {str(e)}")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="An unexpected error occurred while retrieving the current user.",
+            detail="Error retrieving user data"
         )
 
 @router.put("/me", response_model=schemas.User)
@@ -52,16 +59,31 @@ def update_user_me(
     """
     Update own user.
     """
-    current_user_data = jsonable_encoder(current_user)
-    user_in = schemas.UserUpdate(**current_user_data)
-    if password is not None:
-        user_in.password = password
-    if full_name is not None:
-        user_in.full_name = full_name
-    if email is not None:
-        user_in.email = email
-    user = crud.user.update(db, db_obj=current_user, obj_in=user_in)
-    return user
+    try:
+        current_user_data = jsonable_encoder(current_user)
+        user_in = schemas.UserUpdate(**current_user_data)
+        
+        if password is not None:
+            user_in.password = password
+        if full_name is not None:
+            user_in.full_name = full_name
+        if email is not None:
+            user_in.email = email
+            
+        user = crud.user.update(db, db_obj=current_user, obj_in=user_in)
+        return user
+    except ValidationError as ve:
+        logger.error(f"Validation error: {str(ve)}")
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail={"message": "Data validation error", "errors": ve.errors()},
+        )
+    except Exception as e:
+        logger.error(f"Error updating user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Error updating user data"
+        )
 
 @router.get("/{user_id}", response_model=schemas.User)
 def read_user_by_id(

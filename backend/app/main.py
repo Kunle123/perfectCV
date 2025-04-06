@@ -1,13 +1,13 @@
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from fastapi.exceptions import RequestValidationError
+from starlette.exceptions import HTTPException as StarletteHTTPException
+from sqlalchemy.exc import SQLAlchemyError
+from pydantic import ValidationError
 from app.core.config import settings
 from app.api.v1.api import api_router
-from starlette.responses import JSONResponse
-import logging
-
-# Configure logging
-logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
+from app.core.logging import logger
 
 app = FastAPI(
     title="PerfectCV API",
@@ -30,43 +30,97 @@ app.add_middleware(
     max_age=3600,
 )
 
-# Add a middleware to explicitly set CORS headers for all responses
+# Add a middleware to log request details and handle errors
 @app.middleware("http")
-async def add_cors_headers(request: Request, call_next):
-    # For preflight OPTIONS requests, return an empty 200 response with CORS headers
-    if request.method == "OPTIONS":
-        response = Response()
-        response.headers["Access-Control-Allow-Origin"] = "https://perfect-cv-snowy.vercel.app"
-        response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-        response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-        response.headers["Access-Control-Allow-Credentials"] = "true"
-        response.status_code = 200
-        return response
+async def log_and_handle_errors(request: Request, call_next):
+    try:
+        # Log request details
+        logger.debug(f"Request path: {request.url.path}")
+        logger.debug(f"Request method: {request.method}")
+        logger.debug(f"Request headers: {dict(request.headers)}")
         
-    # For all other requests, process normally but ensure CORS headers are set
-    response = await call_next(request)
-    response.headers["Access-Control-Allow-Origin"] = "https://perfect-cv-snowy.vercel.app"
-    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
-    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-Requested-With"
-    response.headers["Access-Control-Allow-Credentials"] = "true"
-    return response
+        # Process the request
+        response = await call_next(request)
+        
+        # Log response details
+        logger.debug(f"Response status: {response.status_code}")
+        logger.debug(f"Response headers: {dict(response.headers)}")
+        
+        return response
+    except ValidationError as e:
+        logger.error(f"Validation error: {str(e)}")
+        return JSONResponse(
+            status_code=422,
+            content={
+                "detail": "Validation error",
+                "errors": e.errors()
+            }
+        )
+    except SQLAlchemyError as e:
+        logger.error(f"Database error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Database error",
+                "message": str(e)
+            }
+        )
+    except Exception as e:
+        logger.error(f"Unhandled error: {str(e)}")
+        return JSONResponse(
+            status_code=500,
+            content={
+                "detail": "Internal server error",
+                "message": str(e)
+            }
+        )
 
-# Add a middleware to log request headers
-@app.middleware("http")
-async def log_request_headers(request: Request, call_next):
-    # Log request headers
-    logger.info(f"Request path: {request.url.path}")
-    logger.info(f"Request method: {request.method}")
-    logger.info(f"Request headers: {dict(request.headers)}")
-    
-    # Process the request
-    response = await call_next(request)
-    
-    # Log response headers
-    logger.info(f"Response status: {response.status_code}")
-    logger.info(f"Response headers: {dict(response.headers)}")
-    
-    return response
+# Handle validation errors
+@app.exception_handler(RequestValidationError)
+async def validation_exception_handler(request: Request, exc: RequestValidationError):
+    logger.error(f"Validation error: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": exc.errors()
+        }
+    )
+
+# Handle HTTP exceptions
+@app.exception_handler(StarletteHTTPException)
+async def http_exception_handler(request: Request, exc: StarletteHTTPException):
+    logger.error(f"HTTP error {exc.status_code}: {exc.detail}")
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={
+            "detail": exc.detail
+        }
+    )
+
+# Handle SQLAlchemy errors
+@app.exception_handler(SQLAlchemyError)
+async def sqlalchemy_exception_handler(request: Request, exc: SQLAlchemyError):
+    logger.error(f"Database error: {str(exc)}")
+    return JSONResponse(
+        status_code=500,
+        content={
+            "detail": "Database error",
+            "message": str(exc)
+        }
+    )
+
+# Handle Pydantic validation errors
+@app.exception_handler(ValidationError)
+async def pydantic_exception_handler(request: Request, exc: ValidationError):
+    logger.error(f"Validation error: {exc.errors()}")
+    return JSONResponse(
+        status_code=422,
+        content={
+            "detail": "Validation error",
+            "errors": exc.errors()
+        }
+    )
 
 # Include API router
 app.include_router(api_router, prefix=settings.API_V1_STR)
@@ -75,7 +129,7 @@ app.include_router(api_router, prefix=settings.API_V1_STR)
 async def root():
     return {"message": "Welcome to PerfectCV API"}
 
-# Test endpoint for CORS debugging
-@app.get("/test-cors")
-async def test_cors():
-    return {"message": "CORS test successful"}
+@app.get("/health")
+async def health_check():
+    """Health check endpoint for monitoring."""
+    return {"status": "healthy"}
