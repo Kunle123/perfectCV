@@ -36,14 +36,12 @@ export const authService = {
     try {
       console.log('Attempting login with email:', credentials.email);
       
-      // Convert credentials to URLSearchParams for proper form data encoding
-      const formData = new URLSearchParams();
-      formData.append('username', credentials.email);
-      formData.append('password', credentials.password);
-      
-      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, formData, {
+      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, {
+        username: credentials.email,
+        password: credentials.password
+      }, {
         headers: {
-          'Content-Type': 'application/x-www-form-urlencoded',
+          'Content-Type': 'application/json',
         },
       });
       
