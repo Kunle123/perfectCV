@@ -6,6 +6,7 @@ const api = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
+    'Origin': 'https://perfect-cv-snowy.vercel.app'
   },
   withCredentials: true, // Enable sending cookies
 });
@@ -22,8 +23,15 @@ api.interceptors.request.use(
       };
     }
 
+    // Ensure Origin header is set
+    config.headers = {
+      ...config.headers,
+      'Origin': 'https://perfect-cv-snowy.vercel.app'
+    };
+
     if (import.meta.env.DEV) {
       console.log(`API Request: ${config.method?.toUpperCase()} ${config.url}`);
+      console.log('Request Headers:', config.headers);
     }
     return config;
   },
