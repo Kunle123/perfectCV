@@ -16,6 +16,7 @@ import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiFile } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
 import { resumeService } from '../../services/resume';
+import { optimizationService } from '../../services/optimization';
 
 const ResumeUpload = () => {
   const { colorMode } = useColorMode();
@@ -77,16 +78,19 @@ const ResumeUpload = () => {
         
         const result = await resumeService.uploadResume(formData);
 
+        // Create an optimization for the uploaded resume
+        const optimizationResult = await optimizationService.optimizeResume(result.id, 0); // Using 0 as a placeholder job description ID
+
         toast({
           title: 'Upload successful',
-          description: 'Your resume has been uploaded successfully',
+          description: 'Your resume has been uploaded and optimized successfully',
           status: 'success',
           duration: 3000,
           isClosable: true,
         });
 
-        // Navigate to the optimization result page
-        navigate('/optimization-result', { state: { resumeId: result.id } });
+        // Navigate to the optimization result page with the optimization ID
+        navigate('/optimization-result', { state: { optimizationId: optimizationResult.id } });
       } catch (error) {
         console.error('Upload error:', error);
         toast({

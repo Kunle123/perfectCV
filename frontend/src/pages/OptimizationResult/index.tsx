@@ -40,12 +40,12 @@ const OptimizationResult = () => {
   useEffect(() => {
     const fetchResult = async () => {
       try {
-        const resumeId = location.state?.resumeId;
-        if (!resumeId) {
-          throw new Error('No resume ID provided');
+        const optimizationId = location.state?.optimizationId;
+        if (!optimizationId) {
+          throw new Error('No optimization ID provided');
         }
 
-        const optimizationResult = await optimizationService.getOptimization(resumeId);
+        const optimizationResult = await optimizationService.getOptimization(optimizationId);
         setResult(optimizationResult);
       } catch (error) {
         console.error('Error fetching optimization result:', error);
