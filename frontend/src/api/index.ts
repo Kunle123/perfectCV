@@ -7,8 +7,7 @@ const api = axios.create({
   headers: {
     'Content-Type': 'application/json',
     'Origin': 'https://perfect-cv-snowy.vercel.app'
-  },
-  withCredentials: true, // Enable sending cookies
+  }
 });
 
 // Add request interceptor
