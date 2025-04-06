@@ -13,7 +13,6 @@ interface User {
 interface LoginResponse {
   access_token: string;
   token_type: string;
-  user: User;
 }
 
 interface RegisterResponse {
@@ -53,22 +52,26 @@ export const authService = {
         console.log('Token received, storing in localStorage');
         localStorage.setItem('token', response.data.access_token);
         
-        // Verify the token immediately after login
+        // Add a small delay before verifying the token
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verify the token
         console.log('Verifying token with getCurrentUser');
         const user = await authService.getCurrentUser();
         console.log('getCurrentUser result:', user);
         
         if (!user) {
           console.error('Token verification failed - no user returned');
+          localStorage.removeItem('token');
           throw new Error('Failed to verify authentication token');
         }
         
         console.log('Login successful and verified');
+        return response.data;
       } else {
         console.error('No access token in login response');
         throw new Error('No access token received from server');
       }
-      return response.data;
     } catch (error) {
       console.error('Login error:', error);
       localStorage.removeItem('token');
@@ -78,6 +81,9 @@ export const authService = {
 
   register: async (data: RegisterData) => {
     const response = await apiService.post(API_ENDPOINTS.AUTH.REGISTER, data);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+    }
     return response.data;
   },
 
