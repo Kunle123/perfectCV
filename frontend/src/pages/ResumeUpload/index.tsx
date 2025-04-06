@@ -15,7 +15,7 @@ import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiFile } from 'react-icons/fi';
 import { useNavigate } from 'react-router-dom';
-import { uploadResume } from '../../services/resume';
+import { resumeService } from '../../services/resume';
 
 const ResumeUpload = () => {
   const { colorMode } = useColorMode();
@@ -64,7 +64,18 @@ const ResumeUpload = () => {
       setUploadProgress(0);
 
       try {
-        const response = await uploadResume(file);
+        // Simulate file upload progress
+        for (let i = 0; i <= 100; i += 10) {
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          setUploadProgress(i);
+        }
+
+        // Upload the file using the resume service
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove file extension
+        
+        const result = await resumeService.uploadResume(formData);
 
         toast({
           title: 'Upload successful',
@@ -75,7 +86,7 @@ const ResumeUpload = () => {
         });
 
         // Navigate to the optimization result page
-        navigate('/optimization-result', { state: { resumeId: response.id } });
+        navigate('/optimization-result', { state: { resumeId: result.id } });
       } catch (error) {
         console.error('Upload error:', error);
         toast({

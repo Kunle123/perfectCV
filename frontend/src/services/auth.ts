@@ -1,4 +1,5 @@
-import api from '../utils/api';
+import { apiService } from '../api';
+import { API_ENDPOINTS } from '../api/config';
 
 interface User {
   id: number;
@@ -19,35 +20,34 @@ interface RegisterResponse {
   user: User;
 }
 
-export const login = async (email: string, password: string): Promise<LoginResponse> => {
-  const response = await api.post('/api/v1/auth/login', {
-    email,
-    password,
-  });
-  const { access_token, token_type, user } = response.data;
-  localStorage.setItem('token', access_token);
-  return { access_token, token_type, user };
-};
+interface LoginCredentials {
+  email: string;
+  password: string;
+}
 
-export const register = async (
-  email: string,
-  password: string,
-  full_name: string
-): Promise<RegisterResponse> => {
-  const response = await api.post('/api/v1/auth/register', {
-    email,
-    password,
-    full_name,
-  });
-  return response.data;
+interface RegisterData {
+  email: string;
+  password: string;
+}
+
+export const authService = {
+  login: async (credentials: LoginCredentials) => {
+    const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+    return response.data;
+  },
+
+  register: async (data: RegisterData) => {
+    const response = await apiService.post(API_ENDPOINTS.AUTH.REGISTER, data);
+    return response.data;
+  },
+
+  getCurrentUser: async () => {
+    const response = await apiService.get(API_ENDPOINTS.AUTH.ME);
+    return response.data;
+  },
 };
 
 export const logout = (): void => {
   localStorage.removeItem('token');
   window.location.href = '/login';
-};
-
-export const getCurrentUser = async (): Promise<User> => {
-  const response = await api.get('/api/v1/auth/me');
-  return response.data;
 };

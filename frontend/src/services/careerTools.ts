@@ -1,22 +1,19 @@
-import { api } from '../utils/api';
+import { apiService } from '../api';
+import { API_ENDPOINTS } from '../api/config';
 
 /**
  * Generate a cover letter based on an uploaded resume and job description
  * @param formData FormData containing resume_file, job_description_text, and optional fields
  * @returns Cover letter data
  */
-export const generateCoverLetter = async (formData: FormData) => {
-  try {
-    const response = await api.post('/career-tools/generate-cover-letter-upload', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error generating cover letter:', error);
-    throw error;
-  }
+export const generateCoverLetter = async (file: File) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const response = await apiService.post(
+    API_ENDPOINTS.CAREER_TOOLS.COVER_LETTER.GENERATE,
+    formData
+  );
+  return response.data;
 };
 
 /**
@@ -25,13 +22,10 @@ export const generateCoverLetter = async (formData: FormData) => {
  * @returns Cover letter data
  */
 export const getCoverLetter = async (id: string) => {
-  try {
-    const response = await api.get(`/career-tools/cover-letter/${id}`);
-    return response.data;
-  } catch (error) {
-    console.error('Error fetching cover letter:', error);
-    throw error;
-  }
+  const response = await apiService.get(
+    API_ENDPOINTS.CAREER_TOOLS.COVER_LETTER.GET(id)
+  );
+  return response.data;
 };
 
 /**
@@ -40,25 +34,10 @@ export const getCoverLetter = async (id: string) => {
  * @param format Export format ('pdf' or 'docx')
  */
 export const exportCoverLetter = async (id: string, format: string) => {
-  try {
-    const response = await api.get(`/career-tools/export-cover-letter/${id}?format=${format}`, {
-      responseType: 'blob',
-    });
-    
-    // Create a download link and trigger download
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `cover_letter_${id}.${format}`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    
-    return true;
-  } catch (error) {
-    console.error(`Error exporting cover letter as ${format}:`, error);
-    throw error;
-  }
+  const response = await apiService.get(
+    API_ENDPOINTS.CAREER_TOOLS.COVER_LETTER.EXPORT(id, format)
+  );
+  return response.data;
 };
 
 /**
@@ -67,17 +46,12 @@ export const exportCoverLetter = async (id: string, format: string) => {
  * @param jobDescriptionId Job description ID
  * @returns Skills gap analysis data
  */
-export const analyzeSkillsGap = async (resumeId: string, jobDescriptionId: string) => {
-  try {
-    const response = await api.post('/career-tools/analyze-skills-gap', {
-      resume_id: parseInt(resumeId),
-      job_description_id: parseInt(jobDescriptionId),
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error analyzing skills gap:', error);
-    throw error;
-  }
+export const analyzeSkillsGap = async (data: any) => {
+  const response = await apiService.post(
+    API_ENDPOINTS.CAREER_TOOLS.SKILLS_GAP.ANALYZE,
+    data
+  );
+  return response.data;
 };
 
 /**
@@ -86,12 +60,10 @@ export const analyzeSkillsGap = async (resumeId: string, jobDescriptionId: strin
  * @param userSkills Dictionary of skill names and descriptions
  * @returns Updated resume data
  */
-export const addUserSkills = async (analysisId: string, userSkills: Record<string, string>) => {
-  try {
-    const response = await api.post(`/career-tools/add-user-skills/${analysisId}`, userSkills);
-    return response.data;
-  } catch (error) {
-    console.error('Error adding user skills:', error);
-    throw error;
-  }
+export const addUserSkills = async (analysisId: string, userSkills: string[]) => {
+  const response = await apiService.post(
+    API_ENDPOINTS.CAREER_TOOLS.SKILLS_GAP.ADD_USER_SKILLS(analysisId),
+    userSkills
+  );
+  return response.data;
 };

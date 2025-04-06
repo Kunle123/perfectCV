@@ -14,10 +14,13 @@ import {
 import { useCallback, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { FiUpload, FiFile } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { jobDescriptionService } from '../../services/jobDescription';
 
 const JobDescriptionUpload = () => {
   const { colorMode } = useColorMode();
   const toast = useToast();
+  const navigate = useNavigate();
   const [uploadProgress, setUploadProgress] = useState(0);
   const [isUploading, setIsUploading] = useState(false);
 
@@ -47,9 +50,13 @@ const JobDescriptionUpload = () => {
           setUploadProgress(i);
         }
 
-        // TODO: Implement actual file upload
-        console.log('Uploading file:', file);
-
+        // Upload the file using the job description service
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('title', file.name.replace(/\.[^/.]+$/, '')); // Remove file extension
+        
+        const result = await jobDescriptionService.createJobDescription(formData);
+        
         toast({
           title: 'Upload successful',
           description: 'Your job description has been uploaded successfully',
@@ -57,7 +64,11 @@ const JobDescriptionUpload = () => {
           duration: 3000,
           isClosable: true,
         });
+        
+        // Navigate to the job description detail page
+        navigate(`/job-descriptions/${result.id}`);
       } catch (error) {
+        console.error('Error uploading job description:', error);
         toast({
           title: 'Upload failed',
           description: 'There was an error uploading your job description',
@@ -70,7 +81,7 @@ const JobDescriptionUpload = () => {
         setUploadProgress(0);
       }
     },
-    [toast]
+    [toast, navigate]
   );
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

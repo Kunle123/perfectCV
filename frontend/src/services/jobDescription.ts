@@ -1,4 +1,5 @@
-import api from '../utils/api';
+import { apiService } from '../api';
+import { API_ENDPOINTS } from '../api/config';
 
 interface JobDescription {
   id: number;
@@ -15,27 +16,23 @@ interface JobDescription {
   updated_at: string;
 }
 
-export const uploadJobDescription = async (
-  title: string,
-  content: string
-): Promise<JobDescription> => {
-  const response = await api.post('/api/v1/job-descriptions', {
-    title,
-    content,
-  });
-  return response.data;
-};
+export const jobDescriptionService = {
+  createJobDescription: async (data: any) => {
+    const response = await apiService.post(API_ENDPOINTS.JOB_DESCRIPTIONS.CREATE, data);
+    return response.data;
+  },
 
-export const getJobDescriptions = async (): Promise<JobDescription[]> => {
-  const response = await api.get('/api/v1/job-descriptions');
-  return response.data;
-};
+  getJobDescriptions: async () => {
+    const response = await apiService.get(API_ENDPOINTS.JOB_DESCRIPTIONS.LIST);
+    return response.data;
+  },
 
-export const getJobDescription = async (id: number): Promise<JobDescription> => {
-  const response = await api.get(`/api/v1/job-descriptions/${id}`);
-  return response.data;
-};
+  getJobDescription: async (id: string) => {
+    const response = await apiService.get(API_ENDPOINTS.JOB_DESCRIPTIONS.DETAIL(id));
+    return response.data;
+  },
 
-export const deleteJobDescription = async (id: number): Promise<void> => {
-  await api.delete(`/api/v1/job-descriptions/${id}`);
+  deleteJobDescription: async (id: string) => {
+    await apiService.delete(API_ENDPOINTS.JOB_DESCRIPTIONS.DELETE(id));
+  }
 };
