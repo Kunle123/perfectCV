@@ -14,7 +14,7 @@ import {
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
 import { useState } from 'react';
-import { register } from '../../services/auth';
+import { authService } from '../../services/auth';
 
 interface RegisterProps {
   onRegister?: () => Promise<void>;
@@ -51,7 +51,8 @@ const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => 
       if (onRegister) {
         await onRegister();
       } else {
-        await register(email, password);
+        const response = await authService.register({ email, password });
+        localStorage.setItem('token', response.access_token);
         toast({
           title: 'Registration successful',
           status: 'success',
