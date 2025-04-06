@@ -28,11 +28,15 @@ interface LoginCredentials {
 interface RegisterData {
   email: string;
   password: string;
+  full_name: string;
 }
 
 export const authService = {
   login: async (credentials: LoginCredentials) => {
     const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+    if (response.data.access_token) {
+      localStorage.setItem('token', response.data.access_token);
+    }
     return response.data;
   },
 
@@ -42,12 +46,21 @@ export const authService = {
   },
 
   getCurrentUser: async () => {
-    const response = await apiService.get(API_ENDPOINTS.AUTH.ME);
-    return response.data;
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        return null;
+      }
+      const response = await apiService.get(API_ENDPOINTS.AUTH.ME);
+      return response.data;
+    } catch (error) {
+      localStorage.removeItem('token');
+      return null;
+    }
   },
-};
 
-export const logout = (): void => {
-  localStorage.removeItem('token');
-  window.location.href = '/login';
+  logout: () => {
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  },
 };
