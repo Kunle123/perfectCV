@@ -11,13 +11,14 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL
  * Constructs a properly formatted API URL
  */
 export function getApiUrl(endpoint: string): string {
-  const cleanEndpoint = endpoint.startsWith('/') ? endpoint.substring(1) : endpoint;
+  // Remove any leading or trailing slashes
+  const cleanEndpoint = endpoint.replace(/^\/+|\/+$/g, '');
   
-  // Remove any duplicate api/v1 in the endpoint
+  // Remove any api/v1 prefix from the endpoint if it exists
   const normalizedEndpoint = cleanEndpoint.replace(/^api\/v1\//, '');
   
   // Ensure the base URL doesn't end with a slash
-  const baseUrl = API_BASE_URL.endsWith('/') ? API_BASE_URL.slice(0, -1) : API_BASE_URL;
+  const baseUrl = API_BASE_URL.replace(/\/+$/, '');
   
   return `${baseUrl}/${normalizedEndpoint}`;
 }
