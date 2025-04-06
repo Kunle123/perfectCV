@@ -59,6 +59,10 @@ export const authService = {
     }
   },
 
+  getToken: () => {
+    return localStorage.getItem('token');
+  },
+
   logout: () => {
     localStorage.removeItem('token');
     window.location.href = '/login';

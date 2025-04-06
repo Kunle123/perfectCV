@@ -52,6 +52,7 @@ export const API_ENDPOINTS = {
     REGISTER: 'auth/register',
     REFRESH: 'auth/refresh',
     LOGOUT: 'auth/logout',
+    ME: 'auth/me',
   },
   RESUMES: {
     BASE: 'resumes',
