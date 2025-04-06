@@ -1,0 +1,5 @@
+[33mcommit 10ee5efe34fcd606044956437ffcdc55942fd4f3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;31morigin/main[m[33m, [m[1;31morigin/HEAD[m[33m)[m
+Author: Kunle123 <kunle2000@gmail.com>
+Date:   Sun Apr 6 13:08:15 2025 +0100
+
+    refactor: update components to use service objects

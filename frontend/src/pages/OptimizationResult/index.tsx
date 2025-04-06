@@ -11,10 +11,15 @@ import {
   Progress,
   Badge,
   Divider,
+  useToast,
 } from '@chakra-ui/react';
 import { FiCheck, FiX, FiAlertCircle } from 'react-icons/fi';
+import { useEffect, useState } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { optimizationService } from '../../services/optimization';
 
 interface OptimizationResult {
+  id: number;
   matchScore: number;
   suggestions: {
     type: 'improvement' | 'missing' | 'warning';
@@ -26,27 +31,125 @@ interface OptimizationResult {
 
 const OptimizationResult = () => {
   const { colorMode } = useColorMode();
+  const [result, setResult] = useState<OptimizationResult | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const toast = useToast();
 
-  // TODO: Replace with actual data from API
-  const result: OptimizationResult = {
-    matchScore: 75,
-    suggestions: [
-      {
-        type: 'improvement',
-        text: 'Add more details about your experience with React',
-      },
-      {
-        type: 'missing',
-        text: 'Include experience with TypeScript',
-      },
-      {
-        type: 'warning',
-        text: 'Consider adding a portfolio section',
-      },
-    ],
-    keywords: ['React', 'JavaScript', 'Node.js', 'Git'],
-    missingKeywords: ['TypeScript', 'Docker', 'AWS'],
+  useEffect(() => {
+    const fetchResult = async () => {
+      try {
+        const resumeId = location.state?.resumeId;
+        if (!resumeId) {
+          throw new Error('No resume ID provided');
+        }
+
+        const optimizationResult = await optimizationService.getOptimization(resumeId);
+        setResult(optimizationResult);
+      } catch (error) {
+        console.error('Error fetching optimization result:', error);
+        toast({
+          title: 'Error',
+          description: 'Failed to load optimization results',
+          status: 'error',
+          duration: 5000,
+          isClosable: true,
+        });
+        navigate('/dashboard');
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchResult();
+  }, [location.state, navigate, toast]);
+
+  const handleApplySuggestions = async () => {
+    if (!result) return;
+
+    try {
+      setIsLoading(true);
+      await optimizationService.optimizeResume(result.id, result.resume_id);
+      toast({
+        title: 'Success',
+        description: 'Resume has been optimized with AI suggestions',
+        status: 'success',
+        duration: 5000,
+        isClosable: true,
+      });
+      navigate('/dashboard');
+    } catch (error) {
+      console.error('Error applying suggestions:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to apply AI suggestions',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
+
+  const handleExport = async (format: 'pdf' | 'docx') => {
+    if (!result) return;
+
+    try {
+      setIsLoading(true);
+      const blob = await optimizationService.exportOptimization(result.id, format);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `optimized-resume.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error('Error exporting resume:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export resume',
+        status: 'error',
+        duration: 5000,
+        isClosable: true,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (isLoading) {
+    return (
+      <Container maxW="container.xl" py={10}>
+        <Stack spacing={8}>
+          <Box>
+            <Heading size="xl">Loading Results...</Heading>
+            <Text color={colorMode === 'light' ? 'gray.600' : 'gray.300'} mt={2}>
+              Please wait while we analyze your resume
+            </Text>
+          </Box>
+        </Stack>
+      </Container>
+    );
+  }
+
+  if (!result) {
+    return (
+      <Container maxW="container.xl" py={10}>
+        <Stack spacing={8}>
+          <Box>
+            <Heading size="xl">No Results Found</Heading>
+            <Text color={colorMode === 'light' ? 'gray.600' : 'gray.300'} mt={2}>
+              Please try optimizing your resume again
+            </Text>
+          </Box>
+        </Stack>
+      </Container>
+    );
+  }
 
   const getSuggestionColor = (type: string) => {
     switch (type) {
@@ -166,11 +269,31 @@ const OptimizationResult = () => {
           <Stack spacing={4}>
             <Heading size="md">Next Steps</Heading>
             <Stack direction={{ base: 'column', md: 'row' }} spacing={4}>
-              <Button colorScheme="blue" size="lg">
+              <Button
+                colorScheme="blue"
+                size="lg"
+                onClick={handleApplySuggestions}
+                isLoading={isLoading}
+              >
                 Apply AI Suggestions
               </Button>
-              <Button variant="outline" colorScheme="blue" size="lg">
-                Edit Manually
+              <Button
+                variant="outline"
+                colorScheme="blue"
+                size="lg"
+                onClick={() => handleExport('pdf')}
+                isLoading={isLoading}
+              >
+                Export as PDF
+              </Button>
+              <Button
+                variant="outline"
+                colorScheme="blue"
+                size="lg"
+                onClick={() => handleExport('docx')}
+                isLoading={isLoading}
+              >
+                Export as DOCX
               </Button>
             </Stack>
           </Stack>

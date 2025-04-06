@@ -1,4 +1,5 @@
-import api from '../utils/api';
+import { apiService } from '../api';
+import { API_ENDPOINTS } from '../api/config';
 
 interface Optimization {
   id: number;
@@ -27,36 +28,29 @@ interface Optimization {
   updated_at: string;
 }
 
-export const optimizeResume = async (
-  resumeId: number,
-  jobDescriptionId: number
-): Promise<Optimization> => {
-  const response = await api.post('/api/v1/optimizations', {
-    resume_id: resumeId,
-    job_description_id: jobDescriptionId,
-  });
-  return response.data;
-};
+export const optimizationService = {
+  optimizeResume: async (resumeId: number, jobDescriptionId: number): Promise<Optimization> => {
+    const response = await apiService.post(API_ENDPOINTS.OPTIMIZATIONS.CREATE, {
+      resume_id: resumeId,
+      job_description_id: jobDescriptionId,
+    });
+    return response.data;
+  },
 
-export const getOptimization = async (id: number): Promise<Optimization> => {
-  const response = await api.get(`/api/v1/optimizations/${id}`);
-  return response.data;
-};
+  getOptimization: async (id: number): Promise<Optimization> => {
+    const response = await apiService.get(API_ENDPOINTS.OPTIMIZATIONS.DETAIL(id.toString()));
+    return response.data;
+  },
 
-export const getOptimizations = async (): Promise<Optimization[]> => {
-  const response = await api.get('/api/v1/optimizations');
-  return response.data;
-};
+  getOptimizations: async (): Promise<Optimization[]> => {
+    const response = await apiService.get(API_ENDPOINTS.OPTIMIZATIONS.LIST);
+    return response.data;
+  },
 
-export const exportOptimization = async (id: number, format: 'pdf' | 'docx'): Promise<Blob> => {
-  const response = await api.post(
-    `/api/v1/optimizations/export/${id}`,
-    {
-      format,
-    },
-    {
-      responseType: 'blob',
-    }
-  );
-  return response.data;
+  exportOptimization: async (id: number, format: 'pdf' | 'docx'): Promise<Blob> => {
+    const response = await apiService.get(API_ENDPOINTS.OPTIMIZATIONS.EXPORT(id.toString()), {
+      responseType: 'blob'
+    });
+    return response.data;
+  }
 };
