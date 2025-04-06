@@ -14,7 +14,7 @@ import {
   FormErrorMessage,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { authService } from '../../services/auth';
 
 interface LoginProps {
@@ -33,6 +33,30 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
   const { colorMode } = useColorMode();
 
   const isLoading = externalLoading || internalLoading;
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (token) {
+        try {
+          const isAuthenticated = await authService.isAuthenticated();
+          if (isAuthenticated) {
+            console.log('User already authenticated, redirecting to dashboard');
+            navigate('/dashboard');
+          } else {
+            console.log('Token exists but is invalid, clearing token');
+            localStorage.removeItem('token');
+          }
+        } catch (error) {
+          console.error('Error checking authentication:', error);
+          localStorage.removeItem('token');
+        }
+      }
+    };
+    
+    checkAuth();
+  }, [navigate]);
 
   const validateForm = () => {
     let isValid = true;
@@ -71,10 +95,14 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
       if (onLogin) {
         await onLogin();
       } else {
+        console.log('Attempting login with email:', email);
         const response = await authService.login({ email, password });
+        console.log('Login response received:', response);
         
         // Verify authentication was successful
         const isAuthenticated = await authService.isAuthenticated();
+        console.log('Authentication verification result:', isAuthenticated);
+        
         if (!isAuthenticated) {
           throw new Error('Authentication verification failed');
         }
@@ -85,6 +113,15 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
           duration: 3000,
           isClosable: true,
         });
+        
+        // Double-check token is in localStorage before navigating
+        const token = localStorage.getItem('token');
+        console.log('Final token check before navigation:', !!token);
+        
+        if (!token) {
+          throw new Error('Token not found in localStorage after login');
+        }
+        
         navigate('/dashboard');
       }
     } catch (error: any) {

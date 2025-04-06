@@ -35,7 +35,18 @@ export const authService = {
   login: async (credentials: LoginCredentials) => {
     try {
       console.log('Attempting login with email:', credentials.email);
-      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, credentials);
+      
+      // Convert credentials to FormData
+      const formData = new FormData();
+      formData.append('username', credentials.email); // OAuth2 expects 'username' field
+      formData.append('password', credentials.password);
+      
+      const response = await apiService.post(API_ENDPOINTS.AUTH.LOGIN, formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      });
+      
       console.log('Login response:', response.data);
       
       if (response.data.access_token) {
