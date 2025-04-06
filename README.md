@@ -1,6 +1,6 @@
 # PerfectCV
 
-A modern web application that helps job seekers optimize their resumes based on job descriptions using AI.
+A modern web application that helps job seekers optimise their resumes based on job descriptions using AI.
 
 ## Features
 
