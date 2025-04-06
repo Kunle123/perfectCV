@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Direct API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .result {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .info {
+            color: blue;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Direct API Test</h1>
+    <p>This page uses multiple methods to test the API connection.</p>
+    
+    <div class="container">
+        <h2>Test 1: Basic Connection Test</h2>
+        <button id="testBasic">Test Basic Connection</button>
+        <div id="basicResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test 2: CORS Test</h2>
+        <button id="testCORS">Test CORS</button>
+        <div id="corsResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test 3: No-CORS Test</h2>
+        <button id="testNoCORS">Test with no-cors mode</button>
+        <div id="noCorsResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test 4: Proxy Test</h2>
+        <p>This test uses a CORS proxy to bypass potential CORS restrictions.</p>
+        <button id="testProxy">Test with CORS Proxy</button>
+        <div id="proxyResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'https://perfectcv-production.up.railway.app/api/v1';
+        const CORS_PROXY = 'https://cors-anywhere.herokuapp.com/';
+        
+        // Test 1: Basic Connection Test
+        document.getElementById('testBasic').addEventListener('click', () => {
+            const resultElement = document.getElementById('basicResult');
+            resultElement.textContent = 'Testing basic connection...';
+            
+            fetch(API_BASE_URL)
+                .then(response => {
+                    resultElement.textContent = `Success! Status: ${response.status}\nHeaders: ${JSON.stringify([...response.headers], null, 2)}`;
+                    resultElement.className = 'result success';
+                    return response.text();
+                })
+                .then(text => {
+                    resultElement.textContent += `\n\nResponse: ${text}`;
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}\n\nThis could be due to:\n1. Network connectivity issues\n2. CORS restrictions\n3. API server being down\n4. Firewall blocking the connection`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test 2: CORS Test
+        document.getElementById('testCORS').addEventListener('click', () => {
+            const resultElement = document.getElementById('corsResult');
+            resultElement.textContent = 'Testing CORS...';
+            
+            fetch(API_BASE_URL, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'application/json',
+                    'Origin': window.location.origin
+                },
+                mode: 'cors'
+            })
+                .then(response => {
+                    resultElement.textContent = `Success! Status: ${response.status}\nHeaders: ${JSON.stringify([...response.headers], null, 2)}`;
+                    resultElement.className = 'result success';
+                    return response.text();
+                })
+                .then(text => {
+                    resultElement.textContent += `\n\nResponse: ${text}`;
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}\n\nThis is likely a CORS issue. The API server might not allow requests from your origin.`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test 3: No-CORS Test
+        document.getElementById('testNoCORS').addEventListener('click', () => {
+            const resultElement = document.getElementById('noCorsResult');
+            resultElement.textContent = 'Testing with no-cors mode...';
+            
+            fetch(API_BASE_URL, {
+                method: 'GET',
+                mode: 'no-cors'
+            })
+                .then(response => {
+                    resultElement.textContent = `Response type: ${response.type}\nStatus: ${response.status}\n\nNote: With no-cors mode, you cannot read the response content.`;
+                    resultElement.className = 'result info';
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test 4: Proxy Test
+        document.getElementById('testProxy').addEventListener('click', () => {
+            const resultElement = document.getElementById('proxyResult');
+            resultElement.textContent = 'Testing with CORS proxy...';
+            
+            fetch(CORS_PROXY + API_BASE_URL, {
+                method: 'GET',
+                headers: {
+                    'Origin': window.location.origin,
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
+                .then(response => {
+                    resultElement.textContent = `Success! Status: ${response.status}\nHeaders: ${JSON.stringify([...response.headers], null, 2)}`;
+                    resultElement.className = 'result success';
+                    return response.text();
+                })
+                .then(text => {
+                    resultElement.textContent += `\n\nResponse: ${text}`;
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}\n\nNote: The CORS proxy might require activation. Visit https://cors-anywhere.herokuapp.com/corsdemo to activate it.`;
+                    resultElement.className = 'result error';
+                });
+        });
+    </script>
+</body>
+</html> 

@@ -4,6 +4,7 @@ from fastapi.security import OAuth2PasswordBearer
 from jose import jwt, JWTError
 from pydantic import ValidationError
 from sqlalchemy.orm import Session
+import logging
 
 from app.core.config import settings
 from app.core.security import verify_password
@@ -36,12 +37,15 @@ def get_current_user(
         user_id: str = payload.get("sub")
         if user_id is None:
             raise credentials_exception
+        logger.info(f"Decoded user_id from token: {user_id}")
     except (JWTError, ValidationError):
         raise credentials_exception
     
     user = db.query(User).filter(User.id == user_id).first()
     if user is None:
+        logger.error(f"User with ID {user_id} not found in the database.")
         raise credentials_exception
+    logger.info(f"User found: {user.email}")
     return user
 
 def get_current_active_user(

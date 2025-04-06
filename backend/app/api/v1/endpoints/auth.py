@@ -5,11 +5,16 @@ from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from app.models.user import User  # Add this import
 from pydantic import BaseModel
+import logging
 
 from app import crud, schemas
 from app.api import deps
 from app.core import security
 from app.core.config import settings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -81,4 +86,11 @@ def read_current_user(
     """
     Get current user.
     """
-    return current_user
+    try:
+        return current_user
+    except Exception as e:
+        logger.error(f"Error retrieving current user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An error occurred while retrieving the current user.",
+        )

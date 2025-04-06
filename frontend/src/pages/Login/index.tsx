@@ -14,7 +14,7 @@ import {
   FormErrorMessage,
 } from '@chakra-ui/react';
 import { Link as RouterLink, useNavigate } from 'react-router-dom';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { authService } from '../../services/auth';
 
 interface LoginProps {
@@ -38,9 +38,13 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
   useEffect(() => {
     const checkAuth = async () => {
       const token = localStorage.getItem('token');
+      console.log('Initial token check:', !!token);
+      
       if (token) {
         try {
           const isAuthenticated = await authService.isAuthenticated();
+          console.log('Authentication check result:', isAuthenticated);
+          
           if (isAuthenticated) {
             console.log('User already authenticated, redirecting to dashboard');
             navigate('/dashboard');
@@ -82,7 +86,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
     return isValid;
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     
     if (!validateForm()) {
@@ -96,10 +100,26 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
         await onLogin();
       } else {
         console.log('Attempting login with email:', email);
+        
+        // Clear any existing token
+        localStorage.removeItem('token');
+        
+        // Attempt login
         const response = await authService.login({ email, password });
         console.log('Login response received:', response);
         
-        // Verify authentication was successful
+        // Check if token was stored
+        const token = localStorage.getItem('token');
+        console.log('Token after login:', !!token);
+        
+        if (!token) {
+          throw new Error('Token not found in localStorage after login');
+        }
+        
+        // Add a small delay before verification
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+        // Verify authentication
         const isAuthenticated = await authService.isAuthenticated();
         console.log('Authentication verification result:', isAuthenticated);
         
@@ -114,21 +134,13 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
           isClosable: true,
         });
         
-        // Double-check token is in localStorage before navigating
-        const token = localStorage.getItem('token');
-        console.log('Final token check before navigation:', !!token);
-        
-        if (!token) {
-          throw new Error('Token not found in localStorage after login');
-        }
-        
         navigate('/dashboard');
       }
     } catch (error: any) {
       console.error('Login error:', error);
       toast({
         title: 'Login failed',
-        description: error.response?.data?.detail || 'Invalid email or password',
+        description: error.response?.data?.detail || error.message || 'Invalid email or password',
         status: 'error',
         duration: 3000,
         isClosable: true,
@@ -156,7 +168,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
                 <Input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setEmail(e.target.value)}
                   placeholder="Enter your email"
                 />
                 <FormErrorMessage>{emailError}</FormErrorMessage>
@@ -167,7 +179,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
                 <Input
                   type="password"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e: ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
                   placeholder="Enter your password"
                 />
                 <FormErrorMessage>{passwordError}</FormErrorMessage>

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Register Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        #result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        #logs {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <h1>Register Test</h1>
+    <div class="form-group">
+        <label for="email">Email:</label>
+        <input type="email" id="email" placeholder="Enter your email">
+    </div>
+    <div class="form-group">
+        <label for="password">Password:</label>
+        <input type="password" id="password" placeholder="Enter your password">
+    </div>
+    <div class="form-group">
+        <label for="fullName">Full Name:</label>
+        <input type="text" id="fullName" placeholder="Enter your full name">
+    </div>
+    <button onclick="testRegister()" id="registerButton">Test Register</button>
+    <div id="result"></div>
+    <div id="logs"></div>
+
+    <script>
+        // Use the local proxy server
+        const API_URL = '/api';
+        const logsDiv = document.getElementById('logs');
+
+        function log(message, type = 'info') {
+            const timestamp = new Date().toISOString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage);
+            logsDiv.innerHTML += logMessage + '\n';
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+
+        async function testRegister() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const fullName = document.getElementById('fullName').value;
+            const resultDiv = document.getElementById('result');
+            const registerButton = document.getElementById('registerButton');
+
+            if (!email || !password || !fullName) {
+                resultDiv.innerHTML = '<span class="error">Please enter all fields</span>';
+                return;
+            }
+
+            registerButton.disabled = true;
+            resultDiv.innerHTML = 'Testing registration...';
+            logsDiv.innerHTML = ''; // Clear previous logs
+
+            try {
+                log('Starting registration test...');
+                log(`API URL: ${API_URL}`);
+
+                // Create registration data
+                const registerData = {
+                    email: email,
+                    password: password,
+                    full_name: fullName
+                };
+
+                log('Making registration request...');
+                log(`Request URL: ${API_URL}/auth/register`);
+                log('Request data:', 'debug');
+                log(JSON.stringify(registerData, null, 2), 'debug');
+
+                // Make registration request
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                });
+
+                log(`Response status: ${response.status}`);
+                log(`Response status text: ${response.statusText}`);
+
+                const data = await response.json();
+                log('Registration response:', 'debug');
+                log(JSON.stringify(data, null, 2), 'debug');
+
+                if (response.ok) {
+                    log('Registration successful!');
+                    
+                    // Store token
+                    localStorage.setItem('token', data.access_token);
+                    log('Token stored in localStorage');
+                    log(`Token: ${data.access_token.substring(0, 20)}...`);
+
+                    // Test protected endpoint
+                    log('Testing protected endpoint...');
+                    const meResponse = await fetch(`${API_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${data.access_token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    log(`Protected endpoint status: ${meResponse.status}`);
+                    
+                    const meData = await meResponse.json();
+                    log('Protected endpoint response:', 'debug');
+                    log(JSON.stringify(meData, null, 2), 'debug');
+
+                    if (meResponse.ok) {
+                        resultDiv.innerHTML = `
+                            <span class="success">Registration successful!</span><br>
+                            Token stored: Yes<br>
+                            User email: ${meData.email}<br>
+                            User ID: ${meData.id}
+                        `;
+                        log('Protected endpoint access successful!');
+                    } else {
+                        throw new Error(`Failed to access protected endpoint: ${meResponse.status} ${meResponse.statusText}`);
+                    }
+                } else {
+                    throw new Error(data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error');
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    log('CORS Error: The server might be blocking requests from this origin.', 'error');
+                    log('Try using a CORS proxy or enabling CORS on the server.', 'error');
+                }
+                resultDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            } finally {
+                registerButton.disabled = false;
+            }
+        }
+
+        // Check if token exists on page load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const resultDiv = document.getElementById('result');
+            if (token) {
+                resultDiv.innerHTML = `
+                    <span class="success">Token found in localStorage</span><br>
+                    Token: ${token.substring(0, 20)}...
+                `;
+                log('Token found in localStorage on page load');
+            } else {
+                log('No token found in localStorage on page load');
+            }
+        };
+    </script>
+</body>
+</html> 

@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PerfectCV Auth Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+        .form-section {
+            flex: 1;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            padding: 10px 20px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ccc;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .success {
+            color: green;
+        }
+        .error {
+            color: red;
+        }
+        .logs {
+            margin-top: 20px;
+            padding: 10px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-family: monospace;
+            white-space: pre-wrap;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #f8f9fa;
+            border: 1px solid #ddd;
+            border-bottom: none;
+            border-radius: 4px 4px 0 0;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: white;
+            border-bottom: 1px solid white;
+            margin-bottom: -1px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <h1>PerfectCV Authentication Test</h1>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('login')">Login</div>
+        <div class="tab" onclick="showTab('register')">Register</div>
+    </div>
+    
+    <div id="login-tab" class="tab-content active">
+        <div class="form-section">
+            <h2>Login Test</h2>
+            <div class="form-group">
+                <label for="login-email">Email:</label>
+                <input type="email" id="login-email" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="login-password">Password:</label>
+                <input type="password" id="login-password" placeholder="Enter your password">
+            </div>
+            <button onclick="testLogin()" id="loginButton">Test Login</button>
+            <div id="login-result" class="result"></div>
+            <div id="login-logs" class="logs"></div>
+        </div>
+    </div>
+    
+    <div id="register-tab" class="tab-content">
+        <div class="form-section">
+            <h2>Register Test</h2>
+            <div class="form-group">
+                <label for="register-email">Email:</label>
+                <input type="email" id="register-email" placeholder="Enter your email">
+            </div>
+            <div class="form-group">
+                <label for="register-password">Password:</label>
+                <input type="password" id="register-password" placeholder="Enter your password">
+            </div>
+            <div class="form-group">
+                <label for="register-fullName">Full Name:</label>
+                <input type="text" id="register-fullName" placeholder="Enter your full name">
+            </div>
+            <button onclick="testRegister()" id="registerButton">Test Register</button>
+            <div id="register-result" class="result"></div>
+            <div id="register-logs" class="logs"></div>
+        </div>
+    </div>
+
+    <script>
+        // API URL - direct to the production API
+        const API_URL = 'https://perfectcv-production.up.railway.app/api/v1';
+        
+        // Function to show/hide tabs
+        function showTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show the selected tab
+            document.getElementById(`${tabName}-tab`).classList.add('active');
+            
+            // Update tab styling
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+        
+        // Function to log messages
+        function log(message, type = 'info', tabId = 'login') {
+            const timestamp = new Date().toISOString();
+            const logMessage = `[${timestamp}] ${message}`;
+            console.log(logMessage);
+            
+            const logsDiv = document.getElementById(`${tabId}-logs`);
+            logsDiv.innerHTML += logMessage + '\n';
+            logsDiv.scrollTop = logsDiv.scrollHeight;
+        }
+        
+        // Function to test login
+        async function testLogin() {
+            const email = document.getElementById('login-email').value;
+            const password = document.getElementById('login-password').value;
+            const resultDiv = document.getElementById('login-result');
+            const loginButton = document.getElementById('loginButton');
+            
+            if (!email || !password) {
+                resultDiv.innerHTML = '<span class="error">Please enter both email and password</span>';
+                return;
+            }
+            
+            loginButton.disabled = true;
+            resultDiv.innerHTML = 'Testing login...';
+            document.getElementById('login-logs').innerHTML = ''; // Clear previous logs
+            
+            try {
+                log('Starting login test...', 'info', 'login');
+                log(`API URL: ${API_URL}`, 'info', 'login');
+                
+                // Create form data for login
+                const formData = new URLSearchParams();
+                formData.append('username', email);
+                formData.append('password', password);
+                
+                log('Making login request...', 'info', 'login');
+                log(`Request URL: ${API_URL}/auth/login`, 'info', 'login');
+                log('Request headers:', 'debug', 'login');
+                log('Content-Type: application/x-www-form-urlencoded', 'debug', 'login');
+                
+                // Make login request
+                const response = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json'
+                    },
+                    body: formData
+                });
+                
+                log(`Response status: ${response.status}`, 'info', 'login');
+                log(`Response status text: ${response.statusText}`, 'info', 'login');
+                
+                const data = await response.json();
+                log('Login response:', 'debug', 'login');
+                log(JSON.stringify(data, null, 2), 'debug', 'login');
+                
+                if (response.ok) {
+                    log('Login successful!', 'info', 'login');
+                    
+                    // Store token
+                    localStorage.setItem('token', data.access_token);
+                    log('Token stored in localStorage', 'info', 'login');
+                    log(`Token: ${data.access_token.substring(0, 20)}...`, 'info', 'login');
+                    
+                    // Test protected endpoint
+                    log('Testing protected endpoint...', 'info', 'login');
+                    const meResponse = await fetch(`${API_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${data.access_token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    log(`Protected endpoint status: ${meResponse.status}`, 'info', 'login');
+                    
+                    const meData = await meResponse.json();
+                    log('Protected endpoint response:', 'debug', 'login');
+                    log(JSON.stringify(meData, null, 2), 'debug', 'login');
+                    
+                    if (meResponse.ok) {
+                        resultDiv.innerHTML = `
+                            <span class="success">Login successful!</span><br>
+                            Token stored: Yes<br>
+                            User email: ${meData.email}<br>
+                            User ID: ${meData.id}
+                        `;
+                        log('Protected endpoint access successful!', 'info', 'login');
+                    } else {
+                        throw new Error(`Failed to access protected endpoint: ${meResponse.status} ${meResponse.statusText}`);
+                    }
+                } else {
+                    throw new Error(data.detail || 'Login failed');
+                }
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error', 'login');
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    log('CORS Error: The server might be blocking requests from this origin.', 'error', 'login');
+                    log('Try using a CORS proxy or enabling CORS on the server.', 'error', 'login');
+                }
+                resultDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            } finally {
+                loginButton.disabled = false;
+            }
+        }
+        
+        // Function to test registration
+        async function testRegister() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const fullName = document.getElementById('register-fullName').value;
+            const resultDiv = document.getElementById('register-result');
+            const registerButton = document.getElementById('registerButton');
+            
+            if (!email || !password || !fullName) {
+                resultDiv.innerHTML = '<span class="error">Please enter all fields</span>';
+                return;
+            }
+            
+            registerButton.disabled = true;
+            resultDiv.innerHTML = 'Testing registration...';
+            document.getElementById('register-logs').innerHTML = ''; // Clear previous logs
+            
+            try {
+                log('Starting registration test...', 'info', 'register');
+                log(`API URL: ${API_URL}`, 'info', 'register');
+                
+                // Create registration data
+                const registerData = {
+                    email: email,
+                    password: password,
+                    full_name: fullName
+                };
+                
+                log('Making registration request...', 'info', 'register');
+                log(`Request URL: ${API_URL}/auth/register`, 'info', 'register');
+                log('Request data:', 'debug', 'register');
+                log(JSON.stringify(registerData, null, 2), 'debug', 'register');
+                
+                // Make registration request
+                const response = await fetch(`${API_URL}/auth/register`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(registerData)
+                });
+                
+                log(`Response status: ${response.status}`, 'info', 'register');
+                log(`Response status text: ${response.statusText}`, 'info', 'register');
+                
+                const data = await response.json();
+                log('Registration response:', 'debug', 'register');
+                log(JSON.stringify(data, null, 2), 'debug', 'register');
+                
+                if (response.ok) {
+                    log('Registration successful!', 'info', 'register');
+                    
+                    // Store token
+                    localStorage.setItem('token', data.access_token);
+                    log('Token stored in localStorage', 'info', 'register');
+                    log(`Token: ${data.access_token.substring(0, 20)}...`, 'info', 'register');
+                    
+                    // Test protected endpoint
+                    log('Testing protected endpoint...', 'info', 'register');
+                    const meResponse = await fetch(`${API_URL}/auth/me`, {
+                        headers: {
+                            'Authorization': `Bearer ${data.access_token}`,
+                            'Accept': 'application/json'
+                        }
+                    });
+                    
+                    log(`Protected endpoint status: ${meResponse.status}`, 'info', 'register');
+                    
+                    const meData = await meResponse.json();
+                    log('Protected endpoint response:', 'debug', 'register');
+                    log(JSON.stringify(meData, null, 2), 'debug', 'register');
+                    
+                    if (meResponse.ok) {
+                        resultDiv.innerHTML = `
+                            <span class="success">Registration successful!</span><br>
+                            Token stored: Yes<br>
+                            User email: ${meData.email}<br>
+                            User ID: ${meData.id}
+                        `;
+                        log('Protected endpoint access successful!', 'info', 'register');
+                    } else {
+                        throw new Error(`Failed to access protected endpoint: ${meResponse.status} ${meResponse.statusText}`);
+                    }
+                } else {
+                    throw new Error(data.detail || 'Registration failed');
+                }
+            } catch (error) {
+                log(`Error: ${error.message}`, 'error', 'register');
+                if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
+                    log('CORS Error: The server might be blocking requests from this origin.', 'error', 'register');
+                    log('Try using a CORS proxy or enabling CORS on the server.', 'error', 'register');
+                }
+                resultDiv.innerHTML = `<span class="error">Error: ${error.message}</span>`;
+            } finally {
+                registerButton.disabled = false;
+            }
+        }
+        
+        // Check if token exists on page load
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const loginResultDiv = document.getElementById('login-result');
+            const registerResultDiv = document.getElementById('register-result');
+            
+            if (token) {
+                loginResultDiv.innerHTML = `
+                    <span class="success">Token found in localStorage</span><br>
+                    Token: ${token.substring(0, 20)}...
+                `;
+                registerResultDiv.innerHTML = `
+                    <span class="success">Token found in localStorage</span><br>
+                    Token: ${token.substring(0, 20)}...
+                `;
+                log('Token found in localStorage on page load', 'info', 'login');
+                log('Token found in localStorage on page load', 'info', 'register');
+            } else {
+                log('No token found in localStorage on page load', 'info', 'login');
+                log('No token found in localStorage on page load', 'info', 'register');
+            }
+        };
+    </script>
+</body>
+</html> 

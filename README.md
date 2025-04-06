@@ -161,3 +161,51 @@ The API documentation is available at:
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# PerfectCV API Test Environment
+
+This is a simple test environment for testing the PerfectCV API authentication flow.
+
+## Prerequisites
+
+- Node.js (v14 or higher)
+- npm (v6 or higher)
+
+## Setup
+
+1. Install dependencies:
+   ```
+   npm install
+   ```
+
+2. Start the proxy server:
+   ```
+   npm start
+   ```
+
+3. Open your browser and navigate to:
+   ```
+   http://localhost:3000/test_login.html
+   ```
+
+## How to Use
+
+1. Enter your email and password in the form
+2. Click "Test Login"
+3. Watch the logs section for detailed information about the login process
+4. Check if the token is stored in localStorage
+
+## Troubleshooting
+
+If you encounter issues:
+
+1. Check the browser console for errors
+2. Check the terminal running the proxy server for errors
+3. Make sure the API server is running and accessible
+4. Try clearing your browser's localStorage
+
+## Files
+
+- `proxy-server.js`: Node.js proxy server that handles CORS issues
+- `test_login.html`: HTML test page for testing the login functionality
+- `package.json`: Node.js dependencies

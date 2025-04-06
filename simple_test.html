@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .result {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>Simple API Test</h1>
+    <p>This page uses a simpler approach to test the API.</p>
+    
+    <div class="container">
+        <h2>Test API Connection</h2>
+        <button id="testConnection">Test Connection</button>
+        <div id="connectionResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test with XMLHttpRequest</h2>
+        <button id="testXHR">Test with XHR</button>
+        <div id="xhrResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test with JSONP</h2>
+        <button id="testJSONP">Test with JSONP</button>
+        <div id="jsonpResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'https://perfectcv-production.up.railway.app/api/v1';
+        
+        // Test simple connection
+        document.getElementById('testConnection').addEventListener('click', () => {
+            const resultElement = document.getElementById('connectionResult');
+            resultElement.textContent = 'Testing connection...';
+            
+            // Create an image to test if the domain is accessible
+            const img = new Image();
+            img.onload = function() {
+                resultElement.textContent = 'Connection successful! The API domain is accessible.';
+                resultElement.className = 'result success';
+            };
+            img.onerror = function() {
+                resultElement.textContent = 'Connection failed! The API domain is not accessible.';
+                resultElement.className = 'result error';
+            };
+            img.src = `${API_BASE_URL}/favicon.ico?t=${new Date().getTime()}`;
+        });
+        
+        // Test with XMLHttpRequest
+        document.getElementById('testXHR').addEventListener('click', () => {
+            const resultElement = document.getElementById('xhrResult');
+            resultElement.textContent = 'Testing with XMLHttpRequest...';
+            
+            const xhr = new XMLHttpRequest();
+            xhr.open('GET', API_BASE_URL, true);
+            
+            xhr.onload = function() {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    resultElement.textContent = `Success! Status: ${xhr.status}\nResponse: ${xhr.responseText}`;
+                    resultElement.className = 'result success';
+                } else {
+                    resultElement.textContent = `Error! Status: ${xhr.status}\nResponse: ${xhr.responseText}`;
+                    resultElement.className = 'result error';
+                }
+            };
+            
+            xhr.onerror = function() {
+                resultElement.textContent = `XHR Error: ${xhr.statusText}`;
+                resultElement.className = 'result error';
+            };
+            
+            xhr.send();
+        });
+        
+        // Test with JSONP (if the API supports it)
+        document.getElementById('testJSONP').addEventListener('click', () => {
+            const resultElement = document.getElementById('jsonpResult');
+            resultElement.textContent = 'Testing with JSONP...';
+            
+            // Create a callback function
+            const callbackName = 'jsonpCallback' + new Date().getTime();
+            window[callbackName] = function(data) {
+                resultElement.textContent = `Success! Response: ${JSON.stringify(data, null, 2)}`;
+                resultElement.className = 'result success';
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+            
+            // Create a script element
+            const script = document.createElement('script');
+            script.src = `${API_BASE_URL}?callback=${callbackName}`;
+            
+            // Handle errors
+            script.onerror = function() {
+                resultElement.textContent = 'JSONP Error: Could not load the script.';
+                resultElement.className = 'result error';
+                document.body.removeChild(script);
+                delete window[callbackName];
+            };
+            
+            // Add a timeout
+            setTimeout(function() {
+                if (window[callbackName]) {
+                    resultElement.textContent = 'JSONP Error: Request timed out.';
+                    resultElement.className = 'result error';
+                    document.body.removeChild(script);
+                    delete window[callbackName];
+                }
+            }, 10000);
+            
+            // Add the script to the document
+            document.body.appendChild(script);
+        });
+    </script>
+</body>
+</html> 

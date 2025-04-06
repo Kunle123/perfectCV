@@ -9,6 +9,12 @@ from app import crud, models, schemas
 from app.api import deps
 from app.core.config import settings
 from app.models.user import User
+import logging
+import sqlalchemy.exc
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 router = APIRouter()
 
@@ -19,7 +25,20 @@ def read_user_me(
     """
     Get current user.
     """
-    return current_user
+    try:
+        return current_user
+    except sqlalchemy.exc.SQLAlchemyError as e:
+        logger.error(f"Database error while retrieving current user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="A database error occurred while retrieving the current user.",
+        )
+    except Exception as e:
+        logger.error(f"Unexpected error while retrieving current user: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred while retrieving the current user.",
+        )
 
 @router.put("/me", response_model=schemas.User)
 def update_user_me(

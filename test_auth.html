@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>API Authentication Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+        .result {
+            background-color: #f5f5f5;
+            padding: 10px;
+            border-radius: 4px;
+            white-space: pre-wrap;
+            overflow-x: auto;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        button {
+            padding: 10px 15px;
+            margin: 10px 0;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .error {
+            color: red;
+            font-weight: bold;
+        }
+        .success {
+            color: green;
+            font-weight: bold;
+        }
+        .info {
+            color: blue;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin: 5px 0;
+            box-sizing: border-box;
+        }
+    </style>
+</head>
+<body>
+    <h1>API Authentication Test</h1>
+    <p>This page allows you to test the API with authentication.</p>
+    
+    <div class="container">
+        <h2>Authentication</h2>
+        <label for="token">Bearer Token:</label>
+        <input type="text" id="token" placeholder="Enter your Bearer token here">
+        <button id="saveToken">Save Token</button>
+        <div id="tokenStatus" class="info">No token saved</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test Endpoints</h2>
+        <button id="testResumesUpload">Test /resumes/upload</button>
+        <button id="testOptimizeResume">Test /optimizations/optimize-resume</button>
+        <button id="testUserProfile">Test /users/profile</button>
+        <div id="endpointResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <div class="container">
+        <h2>Test Auth Endpoints</h2>
+        <p>These endpoints might require a POST request instead of GET.</p>
+        <button id="testAuthLogin">Test /auth/login (POST)</button>
+        <button id="testAuthRegister">Test /auth/register (POST)</button>
+        <div id="authResult" class="result">Results will appear here...</div>
+    </div>
+    
+    <script>
+        const API_BASE_URL = 'https://perfectcv-production.up.railway.app/api/v1';
+        
+        // Function to get the saved token
+        function getToken() {
+            return localStorage.getItem('apiToken') || '';
+        }
+        
+        // Function to save the token
+        function saveToken(token) {
+            localStorage.setItem('apiToken', token);
+            document.getElementById('tokenStatus').textContent = 'Token saved!';
+            document.getElementById('tokenStatus').className = 'success';
+        }
+        
+        // Function to make an authenticated request
+        function makeAuthenticatedRequest(endpoint, method = 'GET', body = null) {
+            const token = getToken();
+            if (!token) {
+                return Promise.reject(new Error('No authentication token found. Please enter a token.'));
+            }
+            
+            const url = `${API_BASE_URL}${endpoint}`;
+            const options = {
+                method: method,
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                mode: 'cors'
+            };
+            
+            if (body) {
+                options.body = JSON.stringify(body);
+            }
+            
+            return fetch(url, options)
+                .then(response => {
+                    return {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: [...response.headers.entries()].reduce((obj, [key, value]) => {
+                            obj[key] = value;
+                            return obj;
+                        }, {}),
+                        body: null
+                    };
+                })
+                .then(async (result) => {
+                    try {
+                        const text = await fetch(url, options).then(r => r.text());
+                        result.body = text;
+                    } catch (e) {
+                        result.body = 'Could not read response body';
+                    }
+                    return result;
+                });
+        }
+        
+        // Save token button
+        document.getElementById('saveToken').addEventListener('click', () => {
+            const token = document.getElementById('token').value.trim();
+            if (token) {
+                saveToken(token);
+            } else {
+                document.getElementById('tokenStatus').textContent = 'Please enter a token';
+                document.getElementById('tokenStatus').className = 'error';
+            }
+        });
+        
+        // Test /resumes/upload
+        document.getElementById('testResumesUpload').addEventListener('click', () => {
+            const resultElement = document.getElementById('endpointResult');
+            resultElement.textContent = 'Testing /resumes/upload...';
+            
+            makeAuthenticatedRequest('/resumes/upload')
+                .then(result => {
+                    resultElement.textContent = `Status: ${result.status} ${result.statusText}\n\nHeaders: ${JSON.stringify(result.headers, null, 2)}\n\nResponse: ${result.body}`;
+                    resultElement.className = result.status >= 200 && result.status < 300 ? 'result success' : 'result error';
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test /optimizations/optimize-resume
+        document.getElementById('testOptimizeResume').addEventListener('click', () => {
+            const resultElement = document.getElementById('endpointResult');
+            resultElement.textContent = 'Testing /optimizations/optimize-resume...';
+            
+            makeAuthenticatedRequest('/optimizations/optimize-resume')
+                .then(result => {
+                    resultElement.textContent = `Status: ${result.status} ${result.statusText}\n\nHeaders: ${JSON.stringify(result.headers, null, 2)}\n\nResponse: ${result.body}`;
+                    resultElement.className = result.status >= 200 && result.status < 300 ? 'result success' : 'result error';
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test /users/profile
+        document.getElementById('testUserProfile').addEventListener('click', () => {
+            const resultElement = document.getElementById('endpointResult');
+            resultElement.textContent = 'Testing /users/profile...';
+            
+            makeAuthenticatedRequest('/users/profile')
+                .then(result => {
+                    resultElement.textContent = `Status: ${result.status} ${result.statusText}\n\nHeaders: ${JSON.stringify(result.headers, null, 2)}\n\nResponse: ${result.body}`;
+                    resultElement.className = result.status >= 200 && result.status < 300 ? 'result success' : 'result error';
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test /auth/login (POST)
+        document.getElementById('testAuthLogin').addEventListener('click', () => {
+            const resultElement = document.getElementById('authResult');
+            resultElement.textContent = 'Testing /auth/login (POST)...';
+            
+            const loginData = {
+                email: 'test@example.com',
+                password: 'password123'
+            };
+            
+            fetch(`${API_BASE_URL}/auth/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(loginData),
+                mode: 'cors'
+            })
+                .then(response => {
+                    return {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: [...response.headers.entries()].reduce((obj, [key, value]) => {
+                            obj[key] = value;
+                            return obj;
+                        }, {}),
+                        body: null
+                    };
+                })
+                .then(async (result) => {
+                    try {
+                        const text = await fetch(`${API_BASE_URL}/auth/login`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(loginData),
+                            mode: 'cors'
+                        }).then(r => r.text());
+                        result.body = text;
+                    } catch (e) {
+                        result.body = 'Could not read response body';
+                    }
+                    return result;
+                })
+                .then(result => {
+                    resultElement.textContent = `Status: ${result.status} ${result.statusText}\n\nHeaders: ${JSON.stringify(result.headers, null, 2)}\n\nResponse: ${result.body}`;
+                    resultElement.className = result.status >= 200 && result.status < 300 ? 'result success' : 'result error';
+                    
+                    // If login was successful, try to extract the token
+                    if (result.status >= 200 && result.status < 300) {
+                        try {
+                            const responseData = JSON.parse(result.body);
+                            if (responseData.token || responseData.access_token) {
+                                const token = responseData.token || responseData.access_token;
+                                saveToken(token);
+                            }
+                        } catch (e) {
+                            // Ignore parsing errors
+                        }
+                    }
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Test /auth/register (POST)
+        document.getElementById('testAuthRegister').addEventListener('click', () => {
+            const resultElement = document.getElementById('authResult');
+            resultElement.textContent = 'Testing /auth/register (POST)...';
+            
+            const registerData = {
+                email: 'test@example.com',
+                password: 'password123',
+                name: 'Test User'
+            };
+            
+            fetch(`${API_BASE_URL}/auth/register`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(registerData),
+                mode: 'cors'
+            })
+                .then(response => {
+                    return {
+                        status: response.status,
+                        statusText: response.statusText,
+                        headers: [...response.headers.entries()].reduce((obj, [key, value]) => {
+                            obj[key] = value;
+                            return obj;
+                        }, {}),
+                        body: null
+                    };
+                })
+                .then(async (result) => {
+                    try {
+                        const text = await fetch(`${API_BASE_URL}/auth/register`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(registerData),
+                            mode: 'cors'
+                        }).then(r => r.text());
+                        result.body = text;
+                    } catch (e) {
+                        result.body = 'Could not read response body';
+                    }
+                    return result;
+                })
+                .then(result => {
+                    resultElement.textContent = `Status: ${result.status} ${result.statusText}\n\nHeaders: ${JSON.stringify(result.headers, null, 2)}\n\nResponse: ${result.body}`;
+                    resultElement.className = result.status >= 200 && result.status < 300 ? 'result success' : 'result error';
+                })
+                .catch(error => {
+                    resultElement.textContent = `Error: ${error.message}`;
+                    resultElement.className = 'result error';
+                });
+        });
+        
+        // Check if token is already saved
+        const savedToken = getToken();
+        if (savedToken) {
+            document.getElementById('token').value = savedToken;
+            document.getElementById('tokenStatus').textContent = 'Token loaded from storage';
+            document.getElementById('tokenStatus').className = 'info';
+        }
+    </script>
+</body>
+</html> 
