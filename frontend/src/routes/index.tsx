@@ -1,8 +1,8 @@
 import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { Box, Spinner } from '@chakra-ui/react';
-import PrivateRoute from './PrivateRoute';
-import PublicRoute from './PublicRoute';
+import PrivateRoute from '../components/Auth/PrivateRoute';
+import PublicRoute from '../components/Auth/PublicRoute';
 
 // Lazy load components
 const Login = lazy(() => import('../pages/Login'));
