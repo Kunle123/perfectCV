@@ -1,7 +1,16 @@
+import re
 from typing import List, Optional
 import os
 from pydantic_settings import BaseSettings
 from pydantic import field_validator
+
+def process_env_template(template_str: str) -> str:
+    """Process environment variable templates in the format ${{VAR_NAME}}"""
+    def replace_var(match):
+        var_name = match.group(1)
+        return os.getenv(var_name, "")
+    
+    return re.sub(r'\$\{\{([A-Za-z0-9_]+)\}\}', replace_var, template_str)
 
 class Settings(BaseSettings):
     API_V1_STR: str = "/api/v1"
@@ -30,12 +39,32 @@ class Settings(BaseSettings):
         return origins
 
     # Database
-    DATABASE_URL: str = os.getenv("DATABASE_URL", "sqlite:///./perfectcv.db")
+    DATABASE_URL: str = process_env_template(os.getenv(
+        "DATABASE_URL",
+        "postgresql://postgres:postgres@europe-west4-drams3a.railway.app:7878/railway?sslmode=require"
+    ))
+    
+    # Database connection settings
     SQLALCHEMY_ECHO: bool = os.getenv("SQLALCHEMY_ECHO", "false").lower() == "true"
     SQLALCHEMY_POOL_SIZE: int = int(os.getenv("SQLALCHEMY_POOL_SIZE", "5"))
     SQLALCHEMY_MAX_OVERFLOW: int = int(os.getenv("SQLALCHEMY_MAX_OVERFLOW", "10"))
     SQLALCHEMY_POOL_TIMEOUT: int = int(os.getenv("SQLALCHEMY_POOL_TIMEOUT", "30"))
     SQLALCHEMY_POOL_RECYCLE: int = int(os.getenv("SQLALCHEMY_POOL_RECYCLE", "1800"))
+    
+    # Railway specific settings
+    RAILWAY_TCP_PROXY_DOMAIN: Optional[str] = os.getenv("RAILWAY_TCP_PROXY_DOMAIN")
+    RAILWAY_TCP_PROXY_PORT: Optional[str] = os.getenv("RAILWAY_TCP_PROXY_PORT")
+    
+    @property
+    def DATABASE_PUBLIC_URL(self) -> str:
+        """Construct the public database URL using Railway's proxy settings"""
+        if self.RAILWAY_TCP_PROXY_DOMAIN and self.RAILWAY_TCP_PROXY_PORT:
+            # Extract credentials from the original DATABASE_URL
+            match = re.match(r'postgresql://([^:]+):([^@]+)@', self.DATABASE_URL)
+            if match:
+                user, password = match.groups()
+                return f"postgresql://{user}:{password}@{self.RAILWAY_TCP_PROXY_DOMAIN}:{self.RAILWAY_TCP_PROXY_PORT}/railway?sslmode=require"
+        return self.DATABASE_URL
 
     # JWT
     JWT_SECRET_KEY: str = os.getenv("JWT_SECRET_KEY", "your-secret-key-here")

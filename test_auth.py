@@ -19,7 +19,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 # API Configuration
-API_URL = "http://127.0.0.1:8080/api/v1"  # Updated to match Railway's port
+BASE_URL = "http://localhost:8080/api/v1"
 
 def handle_response(response: requests.Response, operation: str) -> Dict[str, Any]:
     """Handle API response and extract relevant information."""
@@ -34,70 +34,64 @@ def handle_response(response: requests.Response, operation: str) -> Dict[str, An
         logger.error(f"Error handling response for {operation}: {str(e)}")
         return {"error": str(e)}
 
-def test_registration() -> Tuple[Optional[str], Optional[str]]:
-    """Test user registration with a unique email."""
-    timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
-    test_email = f"test_user_{timestamp}@example.com"
-    test_password = "Test123!@#"
+def test_registration() -> Optional[Dict[str, Any]]:
+    """Test user registration endpoint."""
+    email = f"test_user_{datetime.now().strftime('%Y%m%d%H%M%S')}@example.com"
+    password = "testpassword123"
     
-    register_url = f"{API_URL}/auth/register"
-    register_data = {
-        "email": test_email,
-        "password": test_password,
-        "full_name": "Test User"
-    }
-    
-    logger.info(f"\nTesting Registration with email: {test_email}")
+    logger.info(f"\nTesting Registration with email: {email}")
     try:
-        response = requests.post(register_url, json=register_data)
+        response = requests.post(
+            f"{BASE_URL}/auth/register",
+            json={
+                "email": email,
+                "password": password,
+                "full_name": "Test User"
+            }
+        )
         logger.info(f"Registration Response Status: {response.status_code}")
         
         response_data = handle_response(response, "registration")
         logger.info(f"Registration Response: {json.dumps(response_data)}")
         
-        if response.status_code in [200, 201]:
+        if response.status_code == 200:
             logger.info("Registration successful!")
-            return test_email, test_password
+            return response_data
         else:
             logger.error(f"Registration failed with status {response.status_code}")
-            return None, None
+            return None
     except requests.RequestException as e:
         logger.error(f"Network error during registration: {str(e)}")
-        return None, None
+        return None
     except Exception as e:
         logger.error(f"Unexpected error during registration: {str(e)}")
-        return None, None
+        return None
 
-def test_login(email: Optional[str], password: Optional[str]) -> Optional[str]:
-    """Test login with the provided credentials."""
+def test_login(email: Optional[str], password: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Test login endpoint."""
     if not email or not password:
         logger.error("Cannot test login: No valid credentials provided")
         return None
         
-    login_url = f"{API_URL}/auth/login"
-    login_data = {
-        "username": email,
-        "password": password
-    }
-    
     logger.info("\nTesting Login Process...")
     logger.info(f"Attempting login with email: {email}")
     
     try:
-        response = requests.post(login_url, data=login_data)
+        response = requests.post(
+            f"{BASE_URL}/auth/login",
+            data={
+                "username": email,
+                "password": password
+            }
+        )
         logger.info(f"Login Response Status: {response.status_code}")
         
         response_data = handle_response(response, "login")
         logger.info(f"Login Response: {json.dumps(response_data)}")
         
         if response.status_code == 200:
-            access_token = response_data.get("access_token")
-            if access_token:
-                logger.info(f"\nToken received: {access_token[:20]}...")
-                return access_token
-            else:
-                logger.error("No access token in response")
-                return None
+            logger.info("Login successful!")
+            return response_data
         else:
             logger.error(f"Login failed with status {response.status_code}")
             return None
@@ -108,29 +102,24 @@ def test_login(email: Optional[str], password: Optional[str]) -> Optional[str]:
         logger.error(f"Unexpected error during login: {str(e)}")
         return None
 
-def test_protected_endpoint(access_token: Optional[str]) -> None:
-    """Test accessing a protected endpoint with the access token."""
+def test_me(access_token: Optional[str]) -> Optional[Dict[str, Any]]:
+    """Test /me endpoint."""
     if not access_token:
-        logger.error("Cannot test protected endpoint: No access token provided")
-        return
+        logger.error("Cannot test /me endpoint: No access token provided")
+        return None
         
-    headers = {
-        "Authorization": f"Bearer {access_token}",
-        "Accept": "application/json"
-    }
-    
-    me_url = f"{API_URL}/users/me"
-    logger.info("\nTesting Protected Endpoint...")
+    headers = {"Authorization": f"Bearer {access_token}"}
+    logger.info("\nTesting /me Endpoint...")
     
     try:
-        response = requests.get(me_url, headers=headers)
-        logger.info(f"Protected Endpoint Status: {response.status_code}")
+        response = requests.get(f"{BASE_URL}/auth/me", headers=headers)
+        logger.info(f"Me Endpoint Status: {response.status_code}")
         
-        response_data = handle_response(response, "protected endpoint")
-        logger.info(f"Protected Endpoint Response: {json.dumps(response_data)}")
+        response_data = handle_response(response, "me endpoint")
+        logger.info(f"Me Endpoint Response: {json.dumps(response_data)}")
         
         if response.status_code != 200:
-            logger.error("Failed to access protected endpoint!")
+            logger.error("Failed to access /me endpoint!")
             logger.error(f"Response headers: {dict(response.headers)}")
             
             # Try to decode the token to check its validity
@@ -143,29 +132,38 @@ def test_protected_endpoint(access_token: Optional[str]) -> None:
             except jwt.InvalidTokenError as e:
                 logger.error(f"Invalid token format: {str(e)}")
         else:
-            logger.info("Successfully accessed protected endpoint!")
+            logger.info("Successfully accessed /me endpoint!")
             logger.info(f"User data: {json.dumps(response_data, indent=2)}")
+            return response_data
     except requests.RequestException as e:
-        logger.error(f"Network error accessing protected endpoint: {str(e)}")
+        logger.error(f"Network error accessing /me endpoint: {str(e)}")
     except Exception as e:
-        logger.error(f"Unexpected error accessing protected endpoint: {str(e)}")
+        logger.error(f"Unexpected error accessing /me endpoint: {str(e)}")
+    return None
 
 def main() -> None:
     """Main test function."""
     logger.info("\nStarting fresh user test...")
     
-    # Test registration with new user
-    email, password = test_registration()
+    # Test registration
+    user_data = test_registration()
+    if not user_data:
+        logger.error("Registration failed, cannot proceed with tests")
+        return
     
-    if email and password:
-        # Test login with new user
-        access_token = test_login(email, password)
-        
-        if access_token:
-            # Test protected endpoint
-            test_protected_endpoint(access_token)
+    # Test login
+    login_data = test_login(user_data["email"], "testpassword123")
+    if not login_data:
+        logger.error("Login failed, cannot proceed with tests")
+        return
     
-    logger.info("\nTest completed.")
+    # Test /me endpoint
+    me_data = test_me(login_data["access_token"])
+    if not me_data:
+        logger.error("Me endpoint test failed")
+        return
+    
+    logger.info("\nAll tests completed successfully!")
 
 if __name__ == "__main__":
     main() 
