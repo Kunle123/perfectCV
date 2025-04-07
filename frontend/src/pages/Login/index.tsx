@@ -88,13 +88,8 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    
-    if (!validateForm()) {
-      return;
-    }
-
     setInternalLoading(true);
-
+    
     try {
       if (onLogin) {
         await onLogin();
@@ -134,7 +129,14 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
           isClosable: true,
         });
         
-        navigate('/dashboard');
+        // Check for redirect path
+        const redirectPath = sessionStorage.getItem('redirectAfterLogin');
+        if (redirectPath) {
+          sessionStorage.removeItem('redirectAfterLogin');
+          navigate(redirectPath);
+        } else {
+          navigate('/dashboard');
+        }
       }
     } catch (error: any) {
       console.error('Login error:', error);

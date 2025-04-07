@@ -10,11 +10,47 @@ const api = axios.create({
   }
 });
 
+// Add token initialization check
+const initializeToken = () => {
+  try {
+    const token = localStorage.getItem('token');
+    if (token) {
+      // Validate token format
+      const tokenParts = token.split('.');
+      if (tokenParts.length !== 3) {
+        console.error('Invalid token format found in localStorage');
+        localStorage.removeItem('token');
+        return null;
+      }
+      
+      // Check token expiration
+      try {
+        const payload = JSON.parse(atob(tokenParts[1]));
+        const expirationTime = payload.exp * 1000;
+        if (Date.now() >= expirationTime) {
+          console.error('Expired token found in localStorage');
+          localStorage.removeItem('token');
+          return null;
+        }
+        return token;
+      } catch (error) {
+        console.error('Error parsing token payload:', error);
+        localStorage.removeItem('token');
+        return null;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error('Error accessing localStorage:', error);
+    return null;
+  }
+};
+
 // Add request interceptor
 api.interceptors.request.use(
   (config: AxiosRequestConfig) => {
-    // Get token from localStorage
-    const token = localStorage.getItem('token');
+    // Initialize and validate token
+    const token = initializeToken();
     console.log('API Request Interceptor - Token exists:', !!token);
     
     if (token) {
@@ -24,7 +60,7 @@ api.interceptors.request.use(
         Authorization: `Bearer ${token}`,
       };
     } else {
-      console.warn('No authentication token found. Some API requests may fail.');
+      console.warn('No valid authentication token found. Some API requests may fail.');
     }
 
     // Log the request details in development
@@ -67,7 +103,12 @@ api.interceptors.response.use(
       console.warn('Authentication error: Token may be invalid or expired');
       // Clear token and redirect to login if not already there
       localStorage.removeItem('token');
-      if (!window.location.pathname.includes('/login')) {
+      
+      // Check if we're not already on the login page to avoid redirect loops
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        // Store the current path to redirect back after login
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
         window.location.href = '/login';
       }
     }
@@ -75,7 +116,33 @@ api.interceptors.response.use(
     // Handle CORS errors
     if (error.message.includes('Network Error') || error.message.includes('CORS')) {
       console.error('CORS or Network Error:', error.message);
-      // You might want to show a user-friendly message here
+      // Show a user-friendly error message
+      const errorMessage = document.createElement('div');
+      errorMessage.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background-color: #ff4444;
+        color: white;
+        padding: 15px;
+        border-radius: 5px;
+        z-index: 9999;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      `;
+      errorMessage.textContent = 'Network error: Please check your connection and try again';
+      document.body.appendChild(errorMessage);
+      setTimeout(() => errorMessage.remove(), 5000);
+    }
+    
+    // Handle token expiration
+    if (error.response?.data?.detail?.includes('token has expired')) {
+      console.warn('Token has expired');
+      localStorage.removeItem('token');
+      const currentPath = window.location.pathname;
+      if (!currentPath.includes('/login') && !currentPath.includes('/register')) {
+        sessionStorage.setItem('redirectAfterLogin', currentPath);
+        window.location.href = '/login';
+      }
     }
     
     return Promise.reject(error);
