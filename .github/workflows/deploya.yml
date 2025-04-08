@@ -1,0 +1,67 @@
+name: Deploy PerfectCV
+
+on:
+  push:
+    branches: [CandidateV]
+  workflow_dispatch:
+    inputs:
+      deploy_frontend:
+        description: 'Deploy frontend to Vercel'
+        required: true
+        default: true
+        type: boolean
+      deploy_backend:
+        description: 'Deploy backend to Railway'
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  deploy-backend:
+    name: Deploy Backend to Railway
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'push' || github.event.inputs.deploy_backend == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        
+      - name: Deploy to Railway
+        uses: railway/railway-action@v1
+        with:
+          railway_token: ${{ secrets.RAILWAY_TOKEN }}
+          service: "backend" # Replace with your actual service name in Railway
+          directory: "./backend"
+          
+  deploy-frontend:
+    name: Deploy Frontend to Vercel
+    runs-on: ubuntu-latest
+    needs: deploy-backend
+    if: ${{ github.event_name == 'push' || github.event.inputs.deploy_frontend == 'true' }}
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '18'
+          
+      - name: Install Dependencies
+        working-directory: ./frontend
+        run: npm install
+        
+      - name: Build Frontend
+        working-directory: ./frontend
+        run: npm run build
+        env:
+          VITE_API_URL: /api
+          VITE_APP_NAME: PerfectCV
+          VITE_APP_VERSION: ${{ github.sha }}
+          VITE_STRIPE_PUBLIC_KEY: ${{ secrets.VITE_STRIPE_PUBLIC_KEY }}
+          
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+        
+      - name: Deploy to Vercel
+        working-directory: ./frontend
+        run: vercel deploy --prod --token ${{ secrets.VERCEL_TOKEN }} --yes
