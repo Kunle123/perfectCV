@@ -18,7 +18,7 @@ import { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import { authService } from '../../services/auth';
 
 interface LoginProps {
-  onLogin?: () => Promise<void>;
+  onLogin: (credentials: { email: string; password: string }) => Promise<any>;
   isLoading?: boolean;
 }
 
@@ -92,7 +92,7 @@ const Login = ({ onLogin, isLoading: externalLoading }: LoginProps) => {
     
     try {
       if (onLogin) {
-        await onLogin();
+        await onLogin({ email, password });
       } else {
         console.log('Attempting login with email:', email);
         

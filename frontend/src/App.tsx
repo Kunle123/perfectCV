@@ -12,9 +12,6 @@ import Dashboard from './pages/Dashboard';
 import ResumeUpload from './pages/ResumeUpload';
 import JobDescriptionUpload from './pages/JobDescriptionUpload';
 import OptimizationResult from './pages/OptimizationResult';
-import Payment from './pages/Payment';
-import PaymentSuccess from './pages/PaymentSuccess';
-import PaymentCancel from './pages/PaymentCancel';
 import NotFound from './pages/NotFound';
 import ResumeBuilder from './pages/ResumeBuilder';
 import JobParser from './pages/JobParser';
@@ -62,34 +59,43 @@ const App = ({ initialAuthState = false, skipAuthCheck = false }: AppProps) => {
     checkAuth();
   }, [skipAuthCheck]);
 
-  const handleLogin = async () => {
+  const handleLogin = async (credentials: { email: string; password: string }) => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual login logic
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await authService.login(credentials);
       setIsAuthenticated(true);
+      return response;
     } catch (error) {
       console.error('Login failed:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleRegister = async () => {
+  const handleRegister = async (userData: { email: string; password: string; full_name: string }) => {
     setIsLoading(true);
     try {
-      // TODO: Implement actual registration logic
-      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const response = await authService.register(userData);
       setIsAuthenticated(true);
+      return response;
     } catch (error) {
       console.error('Registration failed:', error);
+      throw error;
     } finally {
       setIsLoading(false);
     }
   };
 
-  const handleLogout = () => {
-    setIsAuthenticated(false);
+  const handleLogout = async () => {
+    try {
+      await authService.logout();
+    } catch (error) {
+      console.error('Logout failed:', error);
+    } finally {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+    }
   };
 
   if (isLoading) {

@@ -35,128 +35,129 @@ A modern web application that helps job seekers optimise their resumes based on 
 - spaCy
 - Stripe
 
-## Prerequisites
+## AI Architecture
 
-- Docker and Docker Compose
-- Node.js 16 or higher (for local frontend development)
-- Python 3.11 or higher (for local backend development)
+PerfectCV uses AI to optimize resumes for specific job applications:
 
-## Quick Start with Docker
+### Components
+
+- **Resume Analysis**: Processes the user's resume and extracts key information
+- **Job Description Analysis**: Parses job descriptions to identify requirements and keywords
+- **Optimization Engine**: Matches resume content against job requirements
+- **Recommendation System**: Generates tailored suggestions for improvement
+
+### AI Integration
+
+- **OpenAI API**: Powers the resume optimization with GPT-4 Turbo
+- **Prompt Engineering**: Custom prompts designed for resume optimization
+- **Error Handling**: Graceful fallback to mock responses for development/testing
+- **JSON Response Format**: Structured data for consistent frontend rendering
+
+### Development & Testing
+
+- Development mode with mock AI responses for testing without API costs
+- Configurable via .env files for easy switching between development and production modes
+- See `backend/README_AI_SERVICE.md` for detailed documentation
+
+## Windows Development Setup
+
+### Prerequisites
+- Python 3.10 or higher
+- Git
+
+### Quick Start
 
 1. Clone the repository:
-
 ```bash
-git clone https://github.com/yourusername/perfectcv.git
+git clone https://github.com/Kunle123/perfectcv.git
 cd perfectcv
 ```
 
-2. Create a `.env` file in the root directory with the following variables:
-
-```env
-# Backend
-DATABASE_URL=postgresql://postgres:postgres@db:5432/perfectcv
-SECRET_KEY=your-secret-key
-STRIPE_SECRET_KEY=your-stripe-secret-key
-STRIPE_WEBHOOK_SECRET=your-stripe-webhook-secret
-
-# Frontend
-VITE_API_URL=http://localhost:8000
-VITE_STRIPE_PUBLIC_KEY=your-stripe-public-key
+2. Set up the development environment:
+```bash
+setup_dev.bat
 ```
 
-3. Start the services:
-
+3. Check if the environment is set up correctly:
 ```bash
-docker-compose up -d
+check_env.bat
 ```
 
-The application will be available at:
-
-- Frontend: http://localhost:3000
-- Backend API: http://localhost:8000
-- API Documentation: http://localhost:8000/docs
-
-## Local Development
-
-### Frontend
-
-1. Navigate to the frontend directory:
-
+4. If you encounter path issues, run:
 ```bash
-cd frontend
-```
-
-2. Install dependencies:
-
-```bash
-npm install
-```
-
-3. Start the development server:
-
-```bash
-npm run dev
-```
-
-### Backend
-
-1. Navigate to the backend directory:
-
-```bash
-cd backend
-```
-
-2. Create a virtual environment and activate it:
-
-```bash
-python -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-3. Install dependencies:
-
-```bash
-pip install -r requirements.txt
-```
-
-4. Set up the database:
-
-```bash
-alembic upgrade head
+fix_path.bat
 ```
 
 5. Start the development server:
-
 ```bash
-uvicorn app.main:app --reload
+start_server.bat
+```
+
+6. Run tests:
+```bash
+run_tests.bat
+```
+
+### Troubleshooting
+
+If you encounter issues:
+
+1. Clean the environment and start fresh:
+```bash
+clean_env.bat
+setup_dev.bat
+```
+
+2. Make sure you're running the commands from the project root directory
+
+3. Ensure Python 3.10 or higher is installed and in your PATH
+
+4. Check if the virtual environment is activated (you should see `(venv)` at the beginning of your command prompt)
+
+5. If you see "ModuleNotFoundError" errors, try running:
+```bash
+fix_path.bat
+```
+
+6. If you still have issues, try manually installing the required packages:
+```bash
+cd backend
+python -m pip install fastapi uvicorn sqlalchemy pydantic pydantic-settings
 ```
 
 ## Project Structure
+- `backend/` - FastAPI backend
+- `frontend/` - React frontend
+- `tests/` - Test files
+- `venv/` - Python virtual environment (created by setup script)
 
-```
-perfectcv/
-├── frontend/           # React frontend application
-├── backend/           # FastAPI backend application
-├── docker/            # Docker configuration files
-│   ├── frontend/     # Frontend Docker configuration
-│   └── backend/      # Backend Docker configuration
-└── docker-compose.yml # Docker Compose configuration
-```
+## Environment Variables
+The following environment variables are set automatically:
+- `ENV_FILE=tests/.env.test` - Test environment configuration
+- `PYTHONPATH` - Set to the backend directory
 
-## API Documentation
+## Deployment
 
-The API documentation is available at:
+### Backend Deployment (Render.com)
+1. Create a new Web Service on Render.com
+2. Connect your GitHub repository
+3. Set the build command: `cd backend && pip install -r requirements.txt`
+4. Set the start command: `cd backend && uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+5. Add the following environment variables:
+   - `DATABASE_URL` - Your PostgreSQL connection string
+   - `JWT_SECRET_KEY` - A secure secret key for JWT tokens
+   - `OPENAI_API_KEY` - Your OpenAI API key
+   - `STRIPE_SECRET_KEY` - Your Stripe secret key
+   - `STRIPE_WEBHOOK_SECRET` - Your Stripe webhook secret
 
-- Swagger UI: http://localhost:8000/docs
-- ReDoc: http://localhost:8000/redoc
-
-## Contributing
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+### Frontend Deployment (Netlify)
+1. Create a new site on Netlify
+2. Connect your GitHub repository
+3. Set the build command: `cd frontend && npm install && npm run build`
+4. Set the publish directory: `frontend/dist`
+5. Add the following environment variables:
+   - `VITE_API_URL` - The URL of your backend API
+   - `VITE_STRIPE_PUBLIC_KEY` - Your Stripe public key
 
 ## License
 

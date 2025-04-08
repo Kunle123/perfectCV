@@ -9,7 +9,7 @@ class CoverLetter(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     resume_id = Column(Integer, ForeignKey("resume.id"))
-    job_description_id = Column(Integer, ForeignKey("jobdescription.id"))
+    job_description_id = Column(Integer, ForeignKey("job_description.id"))
     company_name = Column(String, nullable=True)
     hiring_manager = Column(String, nullable=True)
     additional_notes = Column(Text, nullable=True)

@@ -1,0 +1,74 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+
+# Your rule content
+Code Problem Resolution
+Focus on fixing code issues rather than explaining concepts
+Provide complete solutions that address root causes
+Suggest verification methods to confirm fixes work
+Maintain consistency with FastAPI and SQLAlchemy patterns
+Prioritize security, especially in authentication and file handling
+Context Awareness
+Remember perfectCV is an AI-powered CV optimization platform
+Maintain awareness of system architecture and components
+Reference previous solutions instead of starting from scratch
+Consider how changes affect related components
+Keep end-user experience in mind when suggesting technical solutions
+Efficiency Guidelines
+Avoid repeating the same fixes multiple times
+Build upon existing code rather than rewriting functioning components
+Address related problems together rather than separately
+Don't suggest implementing features that already exist
+Improve existing functionality before suggesting new features
+Technical Standards
+Implement robust error handling with appropriate logging
+Consider performance implications, especially for database operations
+Write clean, documented code with consistent patterns
+Use Python type hints and Pydantic models for type safety
+Remember the application is deployed on Railway with specific configuration
+Communication
+Provide focused solutions without unnecessary explanations
+Lead with code solutions followed by brief explanations when needed
+For complex changes, provide clear step-by-step instructions
+Reference previous discussions when building upon them
+When multiple solutions exist, explain the trade-offs clearly
+
+Code Problem Resolution Focus
+Prioritize Code Fixes: Focus primarily on identifying and resolving code issues rather than explaining concepts.
+Complete Resolution: Provide complete solutions to identified problems, not partial fixes that require further clarification.
+Root Cause Analysis: Identify and address the root cause of issues rather than just symptoms.
+Test Verification: Suggest verification methods or tests to confirm that fixes actually resolve the issue.
+Framework Consistency: Ensure all solutions align with the FastAPI and SQLAlchemy patterns used in the codebase.
+Context Awareness
+Project Memory: Maintain awareness of the perfectCV project's purpose as an AI-powered CV optimization platform.
+Architecture Recall: Remember the system architecture (FastAPI backend, database models, authentication system, resume parsing).
+Previous Fixes: Reference and build upon previous solutions rather than starting from scratch each time.
+Feature Relationships: Consider how changes to one component might affect related components.
+User Goals: Keep the end-user experience in mind when suggesting technical solutions.
+Efficiency and Non-Repetition
+Solution Tracking: Track solutions already provided and avoid repeating the same fixes.
+Incremental Improvement: Build upon existing code rather than rewriting functioning components.
+Consolidate Related Issues: Address related problems together rather than solving them separately.
+Avoid Redundancy: Don't suggest implementing features or fixes that already exist in the codebase.
+Progressive Enhancement: Focus on improving existing functionality before suggesting new features.
+Code Quality Standards
+Error Handling: Ensure robust error handling with appropriate logging and user feedback.
+Security First: Prioritize security best practices, especially for authentication and file handling.
+Performance Awareness: Consider performance implications, especially for database operations and file processing.
+Maintainability: Write clean, documented code that follows consistent patterns.
+Type Safety: Leverage Python type hints and Pydantic models for better type safety.
+Communication Guidelines
+Concise Responses: Provide focused solutions without unnecessary explanations of basic concepts.
+Code-First Approach: Lead with code solutions followed by brief explanations when needed.
+Implementation Steps: For complex changes, provide clear step-by-step implementation instructions.
+Reference Previous Work: Explicitly reference previous discussions or solutions when building upon them.
+Highlight Trade-offs: When multiple solutions exist, clearly explain the trade-offs of each approach.
+Project-Specific Considerations
+Railway Deployment: Remember that the application is deployed on Railway with specific environment configuration.
+Resume Parsing Focus: Prioritize improvements to the core resume parsing and optimization functionality.
+Authentication System: Maintain the JWT-based authentication system with appropriate security measures.
+Database Connections: Be mindful of the PostgreSQL connection handling improvements already implemented.
+File Handling: Pay special attention to secure and efficient file upload and processing mechanisms.

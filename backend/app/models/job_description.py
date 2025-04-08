@@ -4,7 +4,7 @@ from sqlalchemy.orm import relationship
 from app.db.base_class import Base
 
 class JobDescription(Base):
-    __tablename__ = "jobdescription"
+    __tablename__ = "job_description"
     
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"))

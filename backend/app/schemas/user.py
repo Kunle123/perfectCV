@@ -1,5 +1,10 @@
 from typing import Optional
-from pydantic import BaseModel, EmailStr, ConfigDict
+from pydantic import BaseModel, EmailStr, ConfigDict, Field
+
+class Token(BaseModel):
+    """Schema for access token."""
+    access_token: str
+    token_type: str
 
 class UserBase(BaseModel):
     """Base user schema with common attributes."""
@@ -7,7 +12,7 @@ class UserBase(BaseModel):
     full_name: str
     is_active: bool = True
     is_superuser: bool = False
-    credits: int = 10
+    credits: float = Field(default=0.0, ge=0.0)
     stripe_customer_id: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
@@ -23,7 +28,7 @@ class UserUpdate(UserBase):
     full_name: Optional[str] = None
     is_active: Optional[bool] = None
     is_superuser: Optional[bool] = None
-    credits: Optional[int] = None
+    credits: Optional[float] = None
     stripe_customer_id: Optional[str] = None
 
 class User(UserBase):
@@ -32,4 +37,10 @@ class User(UserBase):
 
 class UserInDB(User):
     """Schema for user in database."""
-    hashed_password: str 
+    hashed_password: str
+
+class UserWithToken(UserBase):
+    """Schema for user data with access token."""
+    id: int
+    access_token: str
+    token_type: str 

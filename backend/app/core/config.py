@@ -39,10 +39,10 @@ class Settings(BaseSettings):
         return origins
 
     # Database
-    DATABASE_URL: str = process_env_template(os.getenv(
+    DATABASE_URL: str = os.getenv(
         "DATABASE_URL",
-        "postgresql://postgres:postgres@europe-west4-drams3a.railway.app:7878/railway?sslmode=require"
-    ))
+        "sqlite:///./dev.db" if os.getenv("ENV_FILE") == ".env.development" else "postgresql://postgres:postgres@europe-west4-drams3a.railway.app:7878/railway?sslmode=require"
+    )
     
     # Database connection settings
     SQLALCHEMY_ECHO: bool = os.getenv("SQLALCHEMY_ECHO", "false").lower() == "true"

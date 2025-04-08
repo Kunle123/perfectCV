@@ -103,23 +103,30 @@ function Test-Optimization {
 }
 
 # Main function to run tests
-function Run-Tests {
-    Write-Host "Testing Resume Upload API"
-    Write-Host "========================="
+function Start-ApiTests {
+    [CmdletBinding()]
+    param()
+
+    Write-Host "Starting API tests..."
     
-    # Test resume upload
-    $uploadResult = Test-ResumeUpload -FilePath "test_resume.pdf"
-    Write-Host "Upload Result: $($uploadResult | ConvertTo-Json)"
-    
-    # If upload was successful, test optimization
-    if ($uploadResult -and $uploadResult.id) {
-        Write-Host "`nTesting Optimization API"
-        Write-Host "========================="
+    # Test registration
+    $registrationResult = Test-Registration
+    if ($registrationResult) {
+        Write-Host "Registration successful!"
         
-        $optimizationResult = Test-Optimization -ResumeId $uploadResult.id
-        Write-Host "Optimization Result: $($optimizationResult | ConvertTo-Json)"
+        # Wait a moment before testing login
+        Start-Sleep -Seconds 1
+        
+        # Test login
+        $loginResult = Test-Login
+        if ($loginResult) {
+            Write-Host "Login successful!"
+        }
+    }
+    else {
+        Write-Host "Registration failed. Please check the server logs for more details."
     }
 }
 
 # Run the tests
-Run-Tests 
+Start-ApiTests 

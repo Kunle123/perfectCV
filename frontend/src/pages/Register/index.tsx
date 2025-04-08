@@ -17,7 +17,7 @@ import { useState } from 'react';
 import { authService } from '../../services/auth';
 
 interface RegisterProps {
-  onRegister?: () => Promise<void>;
+  onRegister?: (user: { email: string; password: string; full_name: string }) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -25,6 +25,7 @@ const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [fullName, setFullName] = useState('');
   const [internalLoading, setInternalLoading] = useState(false);
   const navigate = useNavigate();
   const toast = useToast();
@@ -45,14 +46,24 @@ const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => 
       return;
     }
 
+    if (!fullName.trim()) {
+      toast({
+        title: 'Full name is required',
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+
     setInternalLoading(true);
 
     try {
       if (onRegister) {
-        await onRegister();
+        await onRegister({ email, password, full_name: fullName });
       } else {
         console.log('Attempting registration with email:', email);
-        const response = await authService.register({ email, password });
+        const response = await authService.register({ email, password, full_name: fullName });
         console.log('Registration response:', response);
         
         if (response.access_token) {
@@ -109,6 +120,16 @@ const Register = ({ onRegister, isLoading: externalLoading }: RegisterProps) => 
 
           <form onSubmit={handleSubmit}>
             <Stack spacing={4}>
+              <FormControl isRequired>
+                <FormLabel>Full Name</FormLabel>
+                <Input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  placeholder="Enter your full name"
+                />
+              </FormControl>
+
               <FormControl isRequired>
                 <FormLabel>Email</FormLabel>
                 <Input

@@ -9,7 +9,7 @@ class SkillsGapAnalysis(Base):
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(Integer, ForeignKey("user.id"))
     resume_id = Column(Integer, ForeignKey("resume.id"))
-    job_description_id = Column(Integer, ForeignKey("jobdescription.id"))
+    job_description_id = Column(Integer, ForeignKey("job_description.id"))
     missing_skills = Column(JSON, nullable=True)
     enhancement_opportunities = Column(JSON, nullable=True)
     implicit_skills = Column(JSON, nullable=True)

@@ -10,8 +10,8 @@ from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_t
 def create_database_url() -> str:
     """Create and validate the database URL."""
     try:
-        # Use the public URL if available, otherwise fall back to the internal URL
-        database_url = settings.DATABASE_PUBLIC_URL
+        # Use the DATABASE_URL from settings
+        database_url = settings.DATABASE_URL
         logger.info(f"Using database URL: {database_url}")
         
         if database_url.startswith("sqlite"):

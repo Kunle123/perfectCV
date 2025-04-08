@@ -3,11 +3,12 @@ from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
-from app.models.user import User  # Add this import
+from app.models.user import User
 from pydantic import BaseModel
 import logging
 
-from app import crud, schemas
+from app import crud
+from app.schemas.user import UserCreate, UserWithToken, Token, User as UserSchema
 from app.api import deps
 from app.core import security
 from app.core.config import settings
@@ -22,7 +23,7 @@ class LoginRequest(BaseModel):
     username: str
     password: str
 
-@router.post("/login", response_model=schemas.Token)
+@router.post("/login", response_model=Token)
 def login(
     db: Session = Depends(deps.get_db),
     form_data: OAuth2PasswordRequestForm = Depends()
@@ -53,33 +54,61 @@ def login(
         "token_type": "bearer",
     }
 
-@router.post("/register", response_model=schemas.Token)
+@router.post("/register", response_model=UserWithToken, status_code=status.HTTP_201_CREATED)
 def register(
     *,
     db: Session = Depends(deps.get_db),
-    user_in: schemas.UserCreate,
+    user_in: UserCreate,
 ) -> Any:
     """
-    Create new user and return access token.
+    Create new user and return access token and user details.
     """
-    user = crud.user.get_by_email(db, email=user_in.email)
-    if user:
-        raise HTTPException(
-            status_code=400,
-            detail="Email already registered",
-        )
-    user = crud.user.create(db, obj_in=user_in)
-    
-    # Create access token for the new user
-    access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
-    return {
-        "access_token": security.create_access_token(
+    try:
+        logger.info(f"Registration attempt for email: {user_in.email}")
+        
+        # Check if user already exists
+        user = crud.user.get_by_email(db, email=user_in.email)
+        if user:
+            logger.warning(f"Registration failed: Email already registered: {user_in.email}")
+            raise HTTPException(
+                status_code=400,
+                detail="Email already registered",
+            )
+        
+        # Create the user
+        logger.info(f"Creating new user with email: {user_in.email}")
+        user = crud.user.create(db, obj_in=user_in)
+        logger.info(f"User created successfully with ID: {user.id}")
+        
+        # Create access token for the new user
+        access_token_expires = timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
+        access_token = security.create_access_token(
             user.id, expires_delta=access_token_expires
-        ),
-        "token_type": "bearer",
-    }
+        )
+        logger.info(f"Access token created for user ID: {user.id}")
+        
+        # Return both user details and token
+        return {
+            "id": user.id,
+            "email": user.email,
+            "full_name": user.full_name,
+            "is_active": user.is_active,
+            "is_superuser": user.is_superuser,
+            "credits": user.credits,
+            "access_token": access_token,
+            "token_type": "bearer",
+        }
+    except HTTPException as e:
+        # Re-raise HTTP exceptions as they already have the correct status code
+        raise
+    except Exception as e:
+        logger.error(f"Unexpected error during registration: {str(e)}")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="An unexpected error occurred during registration",
+        )
 
-@router.get("/me", response_model=schemas.User)
+@router.get("/me", response_model=UserSchema)
 def read_current_user(
     current_user: User = Depends(deps.get_current_active_user),
 ) -> Any:
@@ -99,7 +128,7 @@ def read_current_user(
         }
         
         # Create and return Pydantic model
-        return schemas.User(**user_dict)
+        return UserSchema(**user_dict)
     except Exception as e:
         logger.error(f"Error retrieving current user: {str(e)}")
         raise HTTPException(
